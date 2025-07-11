@@ -1,0 +1,16 @@
+
+Unequal observations for sub-001 ses-002 bld004, X: 233, y: 234. Skipping run.
+
+Unequal observations for sub-011 ses-002 bld002, X: 386, y: 388. Skipping run.
+
+Unequal observations for sub-013 ses-002 bld004, X: 256, y: 254. Skipping run.
+
+Unequal observations for sub-019 ses-001 bld004, X: 312, y: 310. Skipping run.
+
+Unequal observations for sub-023 ses-002 run-001, X: 267, y: 247. Skipping run.
+
+Unequal observations for sub-023 ses-002 run-002, X: 261, y: 268. Skipping run.
+
+Unequal observations for sub-023 ses-002 run-003, X: 259, y: 262. Skipping run.
+
+Unequal observations for sub-025 ses-001 bld001, X: 247, y: 157. Skipping run.

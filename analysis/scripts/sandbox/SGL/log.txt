@@ -1,0 +1,1000 @@
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 19.9630040
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 16.4671604
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 44.4154297
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 15.0342388
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.3}
+Fold score: 19.9199924
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.3}
+Fold score: 16.4255631
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.3}
+Fold score: 44.2766980
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.3}
+Fold score: 15.0342384
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 19.9870534
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 16.4456591
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 44.5072258
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 15.0402361
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.7}
+Fold score: 19.8986716
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.7}
+Fold score: 16.4110059
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.7}
+Fold score: 44.3666621
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.7}
+Fold score: 15.0405996
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 20.0192746
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 16.4424632
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 44.2654790
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 15.0384839
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.1}
+Fold score: 19.9199780
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.1}
+Fold score: 16.4143085
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.1}
+Fold score: 44.2606165
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.1}
+Fold score: 15.0342345
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.3}
+Fold score: 19.9582663
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.3}
+Fold score: 16.5353814
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.3}
+Fold score: 44.5251763
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.3}
+Fold score: 15.0384801
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.5}
+Fold score: 19.9867357
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.5}
+Fold score: 16.3700899
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.5}
+Fold score: 44.3044085
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.5}
+Fold score: 15.0395544
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.7}
+Fold score: 19.9166011
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.7}
+Fold score: 16.4187901
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.7}
+Fold score: 44.4439625
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.7}
+Fold score: 15.0388929
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.9}
+Fold score: 19.9457045
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.9}
+Fold score: 16.4182829
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.9}
+Fold score: 44.2786736
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.782559402207126e-07, 'l1_ratio': 0.9}
+Fold score: 15.0328899
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.1}
+Fold score: 19.9582256
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.1}
+Fold score: 16.4255970
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.1}
+Fold score: 44.4471513
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.1}
+Fold score: 15.0394384
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.3}
+Fold score: 19.9655759
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.3}
+Fold score: 16.4153906
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.3}
+Fold score: 44.2525199
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.3}
+Fold score: 15.0493398
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.5}
+Fold score: 20.0159628
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.5}
+Fold score: 16.4268207
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.5}
+Fold score: 44.6182389
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.5}
+Fold score: 15.0389069
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.7}
+Fold score: 19.9482911
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.7}
+Fold score: 16.4058684
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.7}
+Fold score: 44.3920386
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.7}
+Fold score: 15.0505725
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.9}
+Fold score: 19.9591765
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.9}
+Fold score: 16.4249939
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.9}
+Fold score: 44.3188520
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 7.742636826811278e-07, 'l1_ratio': 0.9}
+Fold score: 15.0464924
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.1}
+Fold score: 19.9766545
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.1}
+Fold score: 16.3715988
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.1}
+Fold score: 44.3939310
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.1}
+Fold score: 15.0388511
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.3}
+Fold score: 19.9366084
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.3}
+Fold score: 16.4141223
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.3}
+Fold score: 44.3175201
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.3}
+Fold score: 15.0472261
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.5}
+Fold score: 19.8522248
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.5}
+Fold score: 16.4804206
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.5}
+Fold score: 44.3377180
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.5}
+Fold score: 15.0421856
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.7}
+Fold score: 19.8542464
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.7}
+Fold score: 16.3927564
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.7}
+Fold score: 44.3055601
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.7}
+Fold score: 15.0473451
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.9}
+Fold score: 19.8669418
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.9}
+Fold score: 16.4445885
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.9}
+Fold score: 44.4100600
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 2.1544346900318822e-06, 'l1_ratio': 0.9}
+Fold score: 15.0335376
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.1}
+Fold score: 19.9828087
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.1}
+Fold score: 16.3981795
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.1}
+Fold score: 44.4761232
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.1}
+Fold score: 15.0476383
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.3}
+Fold score: 19.8666349
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.3}
+Fold score: 16.3699902
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.3}
+Fold score: 44.4217836
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.3}
+Fold score: 15.0425285
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.5}
+Fold score: 19.9221650
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.5}
+Fold score: 16.4114268
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.5}
+Fold score: 44.1681891
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.5}
+Fold score: 15.0406543
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.7}
+Fold score: 19.8984314
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.7}
+Fold score: 16.3849906
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.7}
+Fold score: 44.2468246
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.7}
+Fold score: 15.0402988
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.9}
+Fold score: 19.8516574
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.9}
+Fold score: 16.4604120
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.9}
+Fold score: 44.3659793
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 5.994842503189409e-06, 'l1_ratio': 0.9}
+Fold score: 15.0464913
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.1}
+Fold score: 19.8427496
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.1}
+Fold score: 16.4451458
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.1}
+Fold score: 44.2565242
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.1}
+Fold score: 15.0418580
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.3}
+Fold score: 19.8380230
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.3}
+Fold score: 16.3786123
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.3}
+Fold score: 44.2439435
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.3}
+Fold score: 15.0448893
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.5}
+Fold score: 19.9797654
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.5}
+Fold score: 16.4527859
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.5}
+Fold score: 44.3213575
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.5}
+Fold score: 15.0405803
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.7}
+Fold score: 19.9206416
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.7}
+Fold score: 16.4539961
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.7}
+Fold score: 44.1429945
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.7}
+Fold score: 15.0442885
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.9}
+Fold score: 19.9170475
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.9}
+Fold score: 16.4211782
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.9}
+Fold score: 44.2731733
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1.6681005372000593e-05, 'l1_ratio': 0.9}
+Fold score: 15.0453751
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.1}
+Fold score: 20.0727260
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.1}
+Fold score: 16.4412626
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.1}
+Fold score: 44.2377422
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.1}
+Fold score: 15.0548198
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.3}
+Fold score: 19.9308936
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.3}
+Fold score: 16.4202493
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.3}
+Fold score: 44.2275114
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.3}
+Fold score: 15.0392786
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.5}
+Fold score: 19.8918390
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.5}
+Fold score: 16.4011536
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.5}
+Fold score: 44.2812081
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.5}
+Fold score: 15.0392441
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.7}
+Fold score: 19.8970968
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.7}
+Fold score: 16.4402760
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.7}
+Fold score: 44.2525320
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.7}
+Fold score: 15.0372936
+Nonzero coefficients: 11159
+
+Held out run: 1
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.9}
+Fold score: 19.8747732
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.9}
+Fold score: 16.3856162
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.9}
+Fold score: 44.0476209
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 4.641588833612773e-05, 'l1_ratio': 0.9}
+Fold score: 15.0375190
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.1}
+Fold score: 19.8715975
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.1}
+Fold score: 16.4447671
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.1}
+Fold score: 44.2578700
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.1}
+Fold score: 15.0380804
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.3}
+Fold score: 19.8933252
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.3}
+Fold score: 16.4044589
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.3}
+Fold score: 44.2629965
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.3}
+Fold score: 15.0342092
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.5}
+Fold score: 19.9605741
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.5}
+Fold score: 16.3991159
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.5}
+Fold score: 44.1002215
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.5}
+Fold score: 15.0398477
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.7}
+Fold score: 20.0493650
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.7}
+Fold score: 16.3937723
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.7}
+Fold score: 44.3012309
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.7}
+Fold score: 15.0402289
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.9}
+Fold score: 20.0034633
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.9}
+Fold score: 16.4209641
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.9}
+Fold score: 43.9727227
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00012915496650148825, 'l1_ratio': 0.9}
+Fold score: 15.0340902
+Nonzero coefficients: 11159
+
+Held out run: 1
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.1}
+Fold score: 19.9233001
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.1}
+Fold score: 16.3615032
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.1}
+Fold score: 44.0716252
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.1}
+Fold score: 15.0268022
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.3}
+Fold score: 19.8540119
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.3}
+Fold score: 16.3613598
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.3}
+Fold score: 43.9061770
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.3}
+Fold score: 15.0297417
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.5}
+Fold score: 19.9006371
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.5}
+Fold score: 16.4358264
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.5}
+Fold score: 43.9581164
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.5}
+Fold score: 15.0293041
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.7}
+Fold score: 19.9547448
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.7}
+Fold score: 16.4304995
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.7}
+Fold score: 44.1095772
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.7}
+Fold score: 15.0339748
+Nonzero coefficients: 11157
+
+Held out run: 1
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.9}
+Fold score: 19.9220395
+Nonzero coefficients: 11158
+
+Held out run: 2
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.9}
+Fold score: 16.3634401
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.9}
+Fold score: 44.0994798
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.00035938136638046257, 'l1_ratio': 0.9}
+Fold score: 15.0327574
+Nonzero coefficients: 11154
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 19.9021116
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 16.3700178
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 43.9867953
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 15.0198011
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.3}
+Fold score: 19.8568639
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.3}
+Fold score: 16.3891729
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.3}
+Fold score: 43.9422269
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.3}
+Fold score: 15.0024951
+Nonzero coefficients: 11156
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 19.8716025
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 16.3510368
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 43.8760029
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 15.0006913
+Nonzero coefficients: 11148
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.7}
+Fold score: 19.7804597
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.7}
+Fold score: 16.3245863
+Nonzero coefficients: 11158
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.7}
+Fold score: 43.8655740
+Nonzero coefficients: 11151
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.7}
+Fold score: 15.0115011
+Nonzero coefficients: 11121
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 19.8506450
+Nonzero coefficients: 11157
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 16.3341196
+Nonzero coefficients: 11159
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 44.0874798
+Nonzero coefficients: 11156
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 15.0087205
+Nonzero coefficients: 11090
+
