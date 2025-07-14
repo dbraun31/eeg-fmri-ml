@@ -151,7 +151,7 @@ class ModelCompare:
             log_file = Path(f'{self.time}_{subject_key}_ModelCompare.pkl')
             with open(self.log_dir_pkl / log_file, 'wb') as file:
                 pickle.dump(result, file)
-        except as exception:
+        except Exception as exception:
             print('Writing final result failed!')
             print(f'With error: {exception}')
 
