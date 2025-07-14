@@ -116,8 +116,12 @@ class ModelCompare:
         self.data = None
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
-        self.log_dir = Path(log_dir or 'scripts/logs/model_compare')
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        log_dir = Path(log_dir or 'scripts/logs/model_compare')
+        # Set up log directories
+        self.log_dir_txt = log_dir / Path('txt')
+        self.log_dir_txt.mkdir(parents=True, exist_ok=True)
+        self.log_dir_pkl = log_dir / Path('pkl')
+        self.log_dir_pkl.mkdir(parents=True, exist_ok=True)
 
         # Process one subject or all subjects
         if self.subject is not None:
@@ -140,6 +144,16 @@ class ModelCompare:
                 subject = self._parse_subject(subject_raw)
                 self.data = self._import_data(self.data_path, subject)
                 result[subject] = self._eval_subject(subject)
+
+        # Write result
+        try: 
+            subject_key = 'AllSubjects' if self.subject is None else self.subject
+            log_file = Path(f'{self.time}_{subject_key}_ModelCompare.pkl')
+            with open(self.log_dir_pkl / log_file, 'wb') as file:
+                pickle.dump(result, file)
+        except as exception:
+            print('Writing final result failed!')
+            print(f'With error: {exception}')
 
         return result
 
@@ -211,7 +225,7 @@ class ModelCompare:
 
         def writer(summary):
             # Append to log
-            log_file = self.log_dir / Path(f'ModelCompare_{self.time}.txt')
+            log_file = self.log_dir_txt / Path(f'ModelCompare_{self.time}.txt')
             with open(log_file, 'a') as f:
                 for line in summary:
                     f.write(line + '\n')
