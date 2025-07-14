@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import re
 import os
+from glob import glob
 from pathlib import Path
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
@@ -16,43 +17,48 @@ from scripts.modules.modeling.grid_search import (
 
 class ModelCompare:
     """
-    Compare multiple machine learning estimators by tuning their hyperparameters
-    on a specified dataset and evaluating their performance.
+    Compare multiple machine learning estimators across one or more subjects 
+    by tuning their hyperparameters and evaluating their performance.
 
-    This class automates the process of hyperparameter tuning using cross-validation 
-    on session 1 data, applies the tuned models to held-out data for final evaluation, 
-    and logs detailed summaries of results for each estimator.
+    This class automates hyperparameter tuning using cross-validation on 
+    session 1 data, applies the tuned models to held-out data for final 
+    evaluation, and logs detailed summaries of results for each estimator 
+    and subject.
 
     Parameters
     ----------
     estimators : dict
-        Dictionary of model names and their corresponding estimator classes or functions.
+        Dictionary mapping model names to their corresponding estimator 
+        classes or functions.
         Example: {'ridge': Ridge, 'lasso': Lasso}
-    
-    param_grids : dict
-        Dictionary of hyperparameter grids for each estimator. Keys should match
-        the estimator names. Each value is itself a dict mapping parameter names
-        to lists of possible values.
-        Example: {'ridge': {'alpha': [0.1, 1, 10]}, 'lasso': {'alpha': [0.01, 0.1]}}
 
-    subject : str or int
-        Identifier for the subject whose data will be loaded and used for model training 
-        and evaluation.
+    param_grids : dict
+        Dictionary of hyperparameter grids for each estimator. Keys must match 
+        the estimator names. Each value is a dict mapping parameter names to 
+        lists of possible values.
+        Example: {'ridge': {'alpha': [0.1, 1, 10]}, 
+                  'lasso': {'alpha': [0.01, 0.1]}}
+
+    subject : str, int, or None, optional
+        Identifier for the subject whose data will be used for training 
+        and evaluation. If None, all subjects in `data_path` will be processed.
 
     fixed_params_dict : dict, optional
-        Optional dictionary mapping estimator names to fixed parameters that should be 
-        passed to the estimator along with the hyperparameters being tuned. Defaults to None.
+        Dictionary mapping estimator names to fixed parameters that should 
+        be passed to the estimator along with the hyperparameters. Defaults to None.
 
     data_path : str or pathlib.Path, optional
-        Path to the directory containing formatted data files. If not provided, defaults 
-        to 'data/formatted'.
+        Path to the directory containing formatted data files. Defaults to 
+        'data/formatted'.
 
     scoring : callable, optional
-        Scoring function to evaluate model performance. Should accept true and predicted 
-        values as arguments and return a scalar score. Defaults to RMSE (root mean squared error).
+        Scoring function to evaluate model performance. Should accept true and 
+        predicted values as arguments and return a scalar score. Defaults to RMSE 
+        (root mean squared error).
 
     log_dir : str or pathlib.Path, optional
-        Directory path where log files will be saved. Defaults to 'scripts/logs/model_compare'.
+        Directory path where log files will be saved. Defaults to 
+        'scripts/logs/model_compare'.
 
     groups : str, optional
         Placeholder for future grouping strategies in cross-validation. Currently unused.
@@ -62,11 +68,12 @@ class ModelCompare:
 
     Attributes
     ----------
-    best_model_ : estimator
-        The best performing estimator found during tuning across all models.
+    best_model_ : tuple
+        The (estimator_name, score) of the best performing estimator found during 
+        tuning for the current subject.
 
     data : dict
-        Loaded data for the specified subject.
+        Loaded data for the current subject.
 
     time : str
         Timestamp string generated at initialization, used to name log files.
@@ -74,11 +81,13 @@ class ModelCompare:
     Methods
     -------
     run()
-        Performs hyperparameter tuning for all estimators, evaluates their final performance,
-        logs results, and returns a list of (estimator_name, final_score) tuples.
+        Executes hyperparameter tuning for all estimators across one or all subjects, 
+        evaluates their performance, logs results, and returns a dictionary 
+        mapping subjects to lists of (estimator_name, final_score) tuples.
     """
 
-    def __init__(self, estimators, param_grids, subject,
+    def __init__(self, estimators, param_grids, 
+                 subject=None,
                  fixed_params_dict = None,
                  data_path=None,
                  scoring=None,
@@ -90,26 +99,57 @@ class ModelCompare:
             raise RuntimeError('Number of estimators must equal number of '
                                 'parameter grids')
 
+        # Bads from preprocessing observation misalignment
+        self.bads = [1, 11, 13, 19, 23, 25]
+
         self.estimators = estimators
         self.param_grids = param_grids
         self.fixed_params_dict = fixed_params_dict
         self.scoring = scoring or (lambda x, y: np.sqrt(np.mean((x - y)**2)))
-        self.subject = subject
-        data_path = Path(data_path or 'data/formatted')
-        self.data = self._import_data(data_path)
+        self.subject = None
+        if subject is not None:
+            self.subject = self._parse_subject(subject)
+        self.subjects = None
+        self.data_path = Path(data_path or 'data/formatted')
         self.verbose = verbose
         self.best_model_ = None
+        self.data = None
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
         self.log_dir = Path(log_dir or 'scripts/logs/model_compare')
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
+        # Process one subject or all subjects
+        if self.subject is not None:
+            self.data = self._import_data(self.data_path, self.subject)
+        else:
+            self.subjects = [Path(x).stem for x in glob(str(self.data_path) + '/*')]
 
 
     def run(self):
         
+        if self.subject is not None:
+            result = {self.subject: self._eval_subject(self.subject)}
+        else:
+            result = {}
+
+            for i, subject_raw in enumerate(self.subjects, start=1):
+                print('\n' + '/' * 2 + ' ' * 3 + 
+                      f'PROCESSING SUBJECT: {i}/{len(self.subjects)}' + 
+                      ' ' * 3 + '/' * 2 + '\n')
+                subject = self._parse_subject(subject_raw)
+                self.data = self._import_data(self.data_path, subject)
+                result[subject] = self._eval_subject(subject)
+
+        return result
+
+
+    def _eval_subject(self, subject):
+        
         # List of (model name, score) tuples
         scores = []
+
+        self._write_log(subject=subject)
 
         for estimator_name in self.estimators:
 
@@ -148,25 +188,43 @@ class ModelCompare:
         return scores
 
 
-
-    def _import_data(self, data_path):
-        
+    def _parse_subject(self, subject_input):
         # Deal with many types of subject input
-        subject = re.search(r'\d+', self.subject).group()
-        if subject is None:
+        subject_match = re.search(r'\d+', subject_input)
+        if subject_match is None:
             raise ValueError('subject must contain a number')
 
-        subject = Path('sub-' + str(int(subject)).zfill(3))
+        subject = 'sub-' + str(int(subject_match.group())).zfill(3)
+        return subject
 
-        data_file = data_path / subject.with_suffix('.pkl')
+    def _import_data(self, data_path, subject):
+
+        data_file = data_path / Path(subject).with_suffix('.pkl')
         with open(data_file, 'rb') as file:
             data = pickle.load(file)
 
         return data
 
 
-    def _write_log(self, estimator_name, cv, score):
+    def _write_log(self, estimator_name=None, cv=None, score=None,
+                   subject=None):
+
+        def writer(summary):
+            # Append to log
+            log_file = self.log_dir / Path(f'ModelCompare_{self.time}.txt')
+            with open(log_file, 'a') as f:
+                for line in summary:
+                    f.write(line + '\n')
+
         summary = []
+
+        if subject is not None:
+            summary.append('-' * 20 + '\n')
+            summary.append(' ' * 10 + f'SUBJECT: {subject}\n')
+            summary.append('-' * 20 + '\n')
+            writer(summary)
+            return None
+
         summary.append('=' * 20)
         summary.append(f'Estimator: {estimator_name}')
         summary.append(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -189,10 +247,6 @@ class ModelCompare:
 
         summary.append('=' * 20)
 
-        # Append to log
-        log_file = self.log_dir / Path(f'ModelCompare_{self.time}.txt')
-        with open(log_file, 'a') as f:
-            for line in summary:
-                f.write(line + '\n')
+        writer(summary)
 
 

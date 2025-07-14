@@ -1,0 +1,35 @@
+--------------------
+
+          SUBJECT: sub-016
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-07-14 11:37:23
+Best parameters: {}
+Best CV score: 16.3678
+Final held-out score: 16.089409
+
+All CV results:
+- Params: {}, Mean CV score: 16.3678, Std CV score: 0.5533
+====================
+====================
+Estimator: SGL
+Date: 2025-07-14 11:39:11
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.1}
+Best CV score: 23.7225
+Final held-out score: 25.090679
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 23.8278, Std CV score: 2.4510
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 23.8213, Std CV score: 2.4441
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 23.8221, Std CV score: 2.4465
+- Params: {'alpha': 9.999999999999999e-06, 'l1_ratio': 0.1}, Mean CV score: 23.8210, Std CV score: 2.4468
+- Params: {'alpha': 9.999999999999999e-06, 'l1_ratio': 0.5}, Mean CV score: 23.8092, Std CV score: 2.4414
+- Params: {'alpha': 9.999999999999999e-06, 'l1_ratio': 0.9}, Mean CV score: 23.8173, Std CV score: 2.4424
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 23.7225, Std CV score: 2.4101
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 23.7286, Std CV score: 2.4109
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 23.7264, Std CV score: 2.4129
+Nonzero coefficients (best model): 0 / 11160
+====================
