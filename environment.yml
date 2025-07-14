@@ -5,6 +5,7 @@ channels:
 dependencies:
   - python=3.11
   - ipython
+  - mne
   - pyprojroot
   - scikit-learn=1.2.2
 prefix: /home/dave/miniconda3/envs/eeg-fmri
