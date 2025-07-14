@@ -1,0 +1,10 @@
+name: eeg-fmri
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - ipython
+  - pyprojroot
+  - scikit-learn=1.2.2
+prefix: /home/dave/miniconda3/envs/eeg-fmri
