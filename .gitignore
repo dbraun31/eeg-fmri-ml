@@ -1,4 +1,5 @@
 docs/
 analysis/data/
 old/
+*.pyc
 r21/
