@@ -223,6 +223,7 @@ class ModelCompare:
     def _write_log(self, estimator_name=None, cv=None, score=None,
                    subject=None):
 
+
         def writer(summary):
             # Append to log
             log_file = self.log_dir_txt / Path(f'ModelCompare_{self.time}.txt')
@@ -238,6 +239,7 @@ class ModelCompare:
             summary.append('-' * 20 + '\n')
             writer(summary)
             return None
+
 
         summary.append('=' * 20)
         summary.append(f'Estimator: {estimator_name}')
@@ -262,5 +264,4 @@ class ModelCompare:
         summary.append('=' * 20)
 
         writer(summary)
-
 

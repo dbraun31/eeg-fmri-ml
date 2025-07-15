@@ -123,7 +123,6 @@ class GridSearchCV(BaseEstimator):
                     self.log.append(status)
 
 
-
             # Param results
             avg_score = np.mean(fold_scores)
             self.results_['params'].append(params) 
@@ -137,15 +136,17 @@ class GridSearchCV(BaseEstimator):
                 best_estimator = model
                 best_params = params
 
+        if self.verbose:
+            print(f'Best params: {best_params} with score {best_score: .4f}')
         self.best_score_ = best_score
         # Fit best estimator on full data
-        best_estimator = self.estimator(**best_params)
+        best_estimator = self.estimator(**best_params, **self.fixed_params)
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
         best_estimator.fit(X, y)
         self.best_estimator_ = best_estimator
         self.best_params_ = best_params
 
-        if self.verbose:
-            print(f'Best params: {best_params} with score {best_score: .4f}')
 
 
         # Write log
@@ -159,6 +160,8 @@ class GridSearchCV(BaseEstimator):
     def predict(self, X):
         if self.best_estimator_ is None:
             raise RuntimeError('You must first call fit() before predict()')
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
         preds = self.best_estimator_.predict(X)
         return preds
 

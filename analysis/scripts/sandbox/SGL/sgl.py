@@ -27,6 +27,7 @@ subject = subjects[-1]
 
 
 # --- COMPARE MODELS --- #
+# Full
 estimators = {'baseline': BaselineModel,
               'SGL': SGL,
               'RandomForest': RandomForestRegressor}
@@ -40,8 +41,15 @@ param_grids = {'baseline': None,
                    'min_samples_leaf': [1, 2]}
                }
 fixed_params_dict = {'SGL': {'groups': get_groups()},
-                     'RandomForest': {'max_features': 'sqrt'}
+                     'RandomForest': {'max_features': 'sqrt', 
+                                      'n_jobs': os.cpu_count() - 1}
                     }
+
+# Simple
+estimators = {'RandomForest': RandomForestRegressor}
+param_grids = {'RandomForest': {'n_estimators': [50, 100]}}
+fixed_params_dict = {'RandomForest': {'max_features': 'sqrt',
+                                      'n_jobs': os.cpu_count() - 1}}
 
 mc = ModelCompare(estimators=estimators,
                   param_grids=param_grids,
