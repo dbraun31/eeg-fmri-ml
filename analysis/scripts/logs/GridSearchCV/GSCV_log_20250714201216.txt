@@ -1,0 +1,180 @@
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 25.1631539
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 29.5748374
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 18.9823341
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.1}
+Fold score: 31.8896885
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 25.1631509
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 29.5572839
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 18.9782230
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.5}
+Fold score: 31.9665999
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 25.1631479
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 29.5427415
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 18.9754060
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-07, 'l1_ratio': 0.9}
+Fold score: 31.9656001
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-05, 'l1_ratio': 0.1}
+Fold score: 25.1664482
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-05, 'l1_ratio': 0.1}
+Fold score: 29.5592182
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-05, 'l1_ratio': 0.1}
+Fold score: 18.9726001
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-05, 'l1_ratio': 0.1}
+Fold score: 31.9136500
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-05, 'l1_ratio': 0.5}
+Fold score: 25.1385372
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-05, 'l1_ratio': 0.5}
+Fold score: 29.5696146
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-05, 'l1_ratio': 0.5}
+Fold score: 18.9756644
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-05, 'l1_ratio': 0.5}
+Fold score: 31.9469218
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 1e-05, 'l1_ratio': 0.9}
+Fold score: 25.2256251
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 1e-05, 'l1_ratio': 0.9}
+Fold score: 29.5380694
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 1e-05, 'l1_ratio': 0.9}
+Fold score: 18.9827172
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 1e-05, 'l1_ratio': 0.9}
+Fold score: 31.9858644
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 25.0225083
+Nonzero coefficients: 11160
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 29.3826275
+Nonzero coefficients: 11160
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 18.9410774
+Nonzero coefficients: 11160
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.1}
+Fold score: 31.7303444
+Nonzero coefficients: 11160
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 24.9752145
+Nonzero coefficients: 11145
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 29.3869552
+Nonzero coefficients: 11141
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 18.9431873
+Nonzero coefficients: 11142
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.5}
+Fold score: 31.7859934
+Nonzero coefficients: 11152
+
+Held out run: 1
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 24.9551414
+Nonzero coefficients: 11104
+
+Held out run: 2
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 29.3896065
+Nonzero coefficients: 11104
+
+Held out run: 3
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 18.9377672
+Nonzero coefficients: 11027
+
+Held out run: 4
+Params: {'alpha': 0.001, 'l1_ratio': 0.9}
+Fold score: 31.8130315
+Nonzero coefficients: 11065
+

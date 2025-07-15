@@ -115,7 +115,9 @@ class GridSearchCV(BaseEstimator):
                 if self.verbose:
                     status0 = f'Held out run: {run}'
                     status1 = f'Params: {params}\nFold score: {score:.7f}'
-                    status2 = f'Nonzero coefficients: {np.sum(model.coef_ != 0)}'
+                    status2 = ''
+                    if hasattr(model, 'coef_'):
+                        status2 = f'Nonzero coefficients: {np.sum(model.coef_ != 0)}'
                     status = status0 + '\n' + status1 + '\n' + status2 + '\n' 
                     print(status)
                     self.log.append(status)
