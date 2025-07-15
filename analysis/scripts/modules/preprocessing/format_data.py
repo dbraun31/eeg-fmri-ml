@@ -104,13 +104,6 @@ class Reformat:
             self._write_data(d)
 
 
-        out_path = Path('data/formatted/dimitrios.pkl')
-
-        if not os.path.exists(out_path.parent):
-            os.makedirs(out_path.parent)
-
-        with open(out_path, 'wb') as file:
-            pickle.dump(d, file)
 
     def _write_data(self, d):
         if not os.path.exists(self.data_path):
