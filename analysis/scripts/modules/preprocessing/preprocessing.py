@@ -11,16 +11,19 @@ import numpy as np
 import os
 import numpy as numpy
 from types import SimpleNamespace
+from scipy.signal import butter, filtfilt
 
 class Reformat:
 
-    def __init__(self, subjects):
+    def __init__(self, subjects, overwrite=False):
         self.subjects = subjects
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
         self.data_path = Path('analysis/data/formatted')
+        self.data_path.mkdir(parents=True, exist_ok=True)
         completed = glob(str(self.data_path / Path('sub')) + '*')
         self.completed = [Path(x).stem for x in completed]
+        self.overwrite = overwrite
 
 
     def run(self):
@@ -35,7 +38,7 @@ class Reformat:
             print(f'Subject: {subject}')
             print('\n')
 
-            if subject in self.completed:
+            if subject in self.completed and not self.overwrite:
                 continue
 
             for session in ['ses-001', 'ses-002']:
@@ -43,15 +46,15 @@ class Reformat:
                 path_eeg = Path(f'analysis/data/original/{subject}/{session}/eeg')
                 path_fmri= Path(f'analysis/data/original/{subject}/{session}/func')
 
-                # Only experience sampling
+                # GradCPT is run 1
                 files_eeg = glob(str(path_eeg / Path('*.set')))
-                files_eeg = [x for x in files_eeg if 'gradcpt' not in x.lower()]
                 files_eeg = sorted(files_eeg, key=self._sort)
-                files_fmri = glob(str(path_fmri / Path('DMN_*')))
-                files_fmri = [x for x in files_fmri if 'gradcpt' not in x.lower()]
-                files_fmri = sorted(files_fmri, key=self._sort)
+                files_dmn = glob(str(path_fmri / Path('DMN_*')))
+                files_dmn = sorted(files_dmn, key=self._sort)
+                files_dan = glob(str(path_fmri / Path('DAN_*')))
+                files_dan = sorted(files_dan, key=self._sort)
 
-                if not files_eeg or not files_fmri:
+                if not files_eeg or not files_dan or not files_dmn:
                     mi = self._get_metainfo(files_eeg)
                     message = (f'Missing data for subject {subject} '
                                f'session {session}. Skipping session.')
@@ -60,9 +63,9 @@ class Reformat:
                     continue
                     
 
-                if not len(files_eeg) == len(files_fmri):
+                if not len(files_eeg) == len(files_dan) or not len(files_eeg) == len(files_dmn):
                     mi = self._get_metainfo(files_eeg)
-                    message("Number of files detected for EEG not equal to "
+                    message = ("Number of files detected for EEG not equal to "
                              "number detected for fMRI.\n" 
                             f"Subject: {subject}, Session: {session}, Run: {run}\n"
                             f"EEG files: {files_eeg}\n"
@@ -71,7 +74,7 @@ class Reformat:
                     self._update_log(message, mi)
                     continue
 
-                for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, files_fmri), start=1):
+                for run, (file_eeg, file_dan, file_dmn) in enumerate(zip(files_eeg, files_dan, files_dmn), start=1):
                     run = 'run-' + str(run).zfill(3)
                     print('\n')
                     print(f'Subject: {subject}, Session: {session}, Run: {run}')
@@ -82,23 +85,36 @@ class Reformat:
                     if X is None:
                         continue
 
-                    y = self._process_fmri(file_fmri)
+                    y_dan, y_dmn = self._process_fmri([file_dan, file_dmn])
+
+                    # Ensure fmri data same observation count
+                    if len(y_dan) != len(y_dmn):
+                        mi = self._get_metainfo(files_eeg)
+                        message = ("Number of observations for DMN not "
+                                   "equal to those for DAN.\n"
+                                   f"Subject: {subject}, Session: {session}, Run: {run}\n"
+                                   f"DMN: {len(y_dmn)}\n"
+                                   f"DAN: {len(y_dan)}\n"
+                                   "Skipping run")
+                        self._update_log(message, mi)
+                        continue
 
                     # Try chopping off last TR
-                    if X[:-1, :].shape[0] == len(y):
+                    if X[:-1, :].shape[0] == len(y_dan):
                         X = X[:-1, :]
 
                     # Validate equal observations across X and y
-                    if X.shape[0] != len(y):
+                    if X.shape[0] != len(y_dan) or X.shape[0] != len(y_dmn):
                         mi = self._get_metainfo(file_eeg)
                         message = (f"Unequal observations for {mi['subject']} "
                                    f"{mi['session']} {mi['run']}, X: {X.shape[0]}, "
-                                   f"y: {len(y)}. Skipping run.")
+                                   f"y_dan: {len(y_dan)}, "
+                                   f"y_dmn: {len(y_dmn)}. Skipping run.")
                         print(message + '\n')
                         self._update_log(message, mi)
                         continue
 
-                    d[session][run] = {'X': X, 'y': y}
+                    d[session][run] = {'X': X, 'y': {'dan': y_dan, 'dmn': y_dmn}}
 
             self.subject = subject
             self._write_data(d)
@@ -127,10 +143,10 @@ class Reformat:
     def _process_eeg(self, file_eeg):
         '''
         Convert eeg file path to a (248, 31 * 40 * 9) array
+        Needs to update to epoch 2 s back from TR marker
         '''
 
         # Open EEGlab file
-        # (some of these EEGlab data don't actually have the data in it)
         try:
             raw = mne.io.read_raw_eeglab(file_eeg)
         except FileNotFoundError as exception:
@@ -142,18 +158,14 @@ class Reformat:
 
             return None
 
-        # Add a bogus epochs dimension
-        data = raw.get_data()
-        sfreq = raw.info['sfreq']
-        data = data[np.newaxis, ...]
 
         # Obtain time-frequency data
         freqs = np.array(range(1, 41))
         njobs = int(os.cpu_count() - 1)
+        sfreq = raw.info['sfreq']
 
-        # Index out the bogus dimension
         tf_full = tfr_array_morlet(
-                data,
+                raw.get_data()[np.newaxis, :, :],
                 sfreq=sfreq,
                 freqs = freqs,
                 n_cycles=7,
@@ -166,11 +178,21 @@ class Reformat:
         # Normalize within frequency band
         rel_power = power / power.sum(axis=2, keepdims=True)
 
-        # Downsample to only TR observations
-        events, event_id = mne.events_from_annotations(raw)
-        tr_samples = events[events[:,2] == event_id['T  1'], 0]
-        tf = rel_power[:, :, tr_samples]
+        # --- DOWNSAMPLE --- #
+        # Get TR events
+        tr_events, _ = mne.events_from_annotations(raw, event_id={'T  1': 4})
+        tr_samples_idxs = tr_events[:, 0]
 
+        # Low pass filter
+        order = 4
+        cutoff = 0.25
+        b, a = butter(4, cutoff / (sfreq / 2), btype='low')
+        filtered = filtfilt(b, a, rel_power)
+
+        # Downsample
+        tf = filtered[:, :, tr_samples_idxs]
+        
+        # --- RESHAPE, GET LAGS --- #
         # Reshape (TRs, channels, freqs)
         tf = tf.transpose(2, 0, 1)
 
@@ -232,18 +254,24 @@ class Reformat:
         return {'subject': subject, 'session': session, 'run': run}
 
 
-    def _process_fmri(self, file_fmri):
+    def _process_fmri(self, files):
         '''
+        Input is [file_dan, file_dmn]
         Convert eeg file path to a (248, 31 * 40 * 9) array
         '''
+        out = []
 
-        with open(file_fmri, 'r') as f:
-            d = f.readlines()
+        for file in files:
 
-        d = np.array([float(x.strip()) for x in d])
+            with open(file, 'r') as f:
+                d = f.readlines()
 
-        # Chop off first 8 observations
-        return d[8:]
+            # Chop off first 8 observations
+            d = np.array([float(x.strip()) for x in d])[8:]
+
+            out.append(d)
+
+        return out
 
 
 if __name__ == '__main__':
