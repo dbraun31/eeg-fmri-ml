@@ -18,11 +18,11 @@ if (file.exists(path(root, 'correlations_long.csv'))) {
 
     # Get channel names
     use_condaenv('eeg-fmri')
-    py_run_string("
-    import mne
-    raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
-    ch_names = raw.info['ch_names']
-    ")
+py_run_string("
+import mne
+raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
+ch_names = raw.info['ch_names']
+")
     ch_names <- py$ch_names
     # Make order more logical
     ch_names <- c(ch_names[grepl('^F', ch_names)], ch_names[grepl('^T', ch_names)],
@@ -31,29 +31,35 @@ if (file.exists(path(root, 'correlations_long.csv'))) {
     
     d <- data.table(read_feather('data/merged_data.feather'))
     
-    voltage_cols <- colnames(d)[7:length(colnames(d))]
+    voltage_cols <- colnames(d)[9:length(colnames(d))]
     
     # Big data table energy (expensive)
     result <- d[,
       .(dmn_cors = list(sapply(.SD, function(col) cor(dmn, col, use = 'pairwise.complete.obs', method='spearman'))),
-        dan_cors = list(sapply(.SD, function(col) cor(dan, col, use = 'pairwise.complete.obs', method='spearman')))),
+        dan_cors = list(sapply(.SD, function(col) cor(dan, col, use = 'pairwise.complete.obs', method='spearman'))),
+        dmna_cors = list(sapply(.SD, function(col) cor(dmn_a, col, use = 'pairwise.complete.obs', method='spearman'))),
+        dmnb_cors = list(sapply(.SD, function(col) cor(dmn_b, col, use = 'pairwise.complete.obs', method='spearman')))),
       by = .(subject, session, run),
       .SDcols = voltage_cols
       ][
           ,
           .(mean_dmn = list(Reduce(`+`, dmn_cors) / length(dmn_cors)),
-            mean_dan = list(Reduce(`+`, dan_cors) / length(dan_cors))),
+            mean_dan = list(Reduce(`+`, dan_cors) / length(dan_cors)),
+            mean_dmna = list(Reduce(`+`, dmna_cors) / length(dmna_cors)),
+            mean_dmnb = list(Reduce(`+`, dmnb_cors) / length(dmnb_cors))),
           by = subject
       ][
           ,
           .(feature = voltage_cols, dmn_cors = unlist(mean_dmn),
-            dan_cors = unlist(mean_dan)),
+            dan_cors = unlist(mean_dan),
+            dmna_cors = unlist(mean_dmna),
+            dmnb_cors = unlist(mean_dmnb)),
           by = subject
       ]
     
     result <- result %>% 
         separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-        gather(region, cors, dmn_cors, dan_cors) %>% 
+        gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors) %>% 
         mutate(region = str_replace(region, '_cors', ''),
                lag = as.integer(lag),
                frequency = as.integer(frequency),
@@ -106,6 +112,17 @@ ggsave(path(root, 'figures/correlation_histograms.png'), width = 1920, height = 
 # --- BIVARIATE HEATMAPS --- #
 # Averaged across subject and session, and the non plotted dimension
 # x axis is frequency
+
+# Get channel coordinates
+use_condaenv('eeg-fmri')
+py_run_string("
+from scripts.modules.preprocessing.eeg_utils import get_channel_coordinates
+import mne
+raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
+ch_names = raw.info['ch_names']
+ch_pos = get_channel_coordinates(ch_names)
+")
+ch_names <- py$ch_names
 
 # Prep data
 pd1 <- result %>% 
@@ -175,19 +192,11 @@ ggsave(plot = g, filename = path(root, 'figures/heat_maps.png'),
 
 # --- PLOT TOPOS --- #
 
-# Get channel coordinates
-use_condaenv('eeg-fmri')
-py_run_string("
-from scripts.modules.preprocessing.eeg_utils import get_channel_coordinates
-import mne
-raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
-ch_names = raw.info['ch_names']
-ch_pos = get_channel_coordinates(ch_names)
-")
-
 # Get frequency bands
 breaks <- c(0, 4, 8, 12, 30, 100)
 labels <- c('Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+bins <- unique(cut(result$frequency, breaks=breaks))
+labels <- paste(labels, bins, sep=' ')
 
 pd <- result %>% 
     mutate(band = cut(frequency, breaks, labels)) %>% 

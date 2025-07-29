@@ -53,6 +53,12 @@ class Reformat:
                 files_dmn = sorted(files_dmn, key=self._sort)
                 files_dan = glob(str(path_fmri / Path('DAN_*')))
                 files_dan = sorted(files_dan, key=self._sort)
+                files_dna = glob(str(path_fmri / Path('DNa*')))
+                files_dna = sorted(files_dna, key = self._sort)
+                files_dnb = glob(str(path_fmri / Path('DNb*')))
+                files_dnb = sorted(files_dnb, key = self._sort)
+                files_fmri = [files_dan, files_dmn, files_dna, files_dnb]
+
 
                 if not files_eeg or not files_dan or not files_dmn:
                     mi = self._get_metainfo(files_eeg)
@@ -71,10 +77,13 @@ class Reformat:
                             f"EEG files: {files_eeg}\n"
                             f"fMRI files: {files_fmri}\n"
                             "Skipping run.")
+                    print(message + '\n')
                     self._update_log(message, mi)
                     continue
 
-                for run, (file_eeg, file_dan, file_dmn) in enumerate(zip(files_eeg, files_dan, files_dmn), start=1):
+                for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, zip(*files_fmri)), start=1):
+                    # file_fmri is a tuple of each of one run files for all
+                    # fmri
                     run = 'run-' + str(run).zfill(3)
                     print('\n')
                     print(f'Subject: {subject}, Session: {session}, Run: {run}')
@@ -85,17 +94,22 @@ class Reformat:
                     if X is None:
                         continue
 
-                    y_dan, y_dmn = self._process_fmri([file_dan, file_dmn])
+                    y_dan, y_dmn, y_dna, y_dnb = self._process_fmri(file_fmri)
 
                     # Ensure fmri data same observation count
-                    if len(y_dan) != len(y_dmn):
-                        mi = self._get_metainfo(files_eeg)
+                    if not all([len(y_dan) == len(y_dmn), 
+                                len(y_dmn) == len(y_dna), 
+                                len(y_dna) == len(y_dnb)]):
+                        mi = self._get_metainfo(files_eeg[0])
                         message = ("Number of observations for DMN not "
                                    "equal to those for DAN.\n"
                                    f"Subject: {subject}, Session: {session}, Run: {run}\n"
                                    f"DMN: {len(y_dmn)}\n"
                                    f"DAN: {len(y_dan)}\n"
+                                   f"DMNa: {len(y_dna)}\n"
+                                   f"DMNb: {len(y_dnb)}\n"
                                    "Skipping run")
+                        print(message + '\n')
                         self._update_log(message, mi)
                         continue
 
@@ -114,7 +128,10 @@ class Reformat:
                         self._update_log(message, mi)
                         continue
 
-                    d[session][run] = {'X': X, 'y': {'dan': y_dan, 'dmn': y_dmn}}
+                    d[session][run] = {'X': X, 'y': {'dan': y_dan, 
+                                                     'dmn': y_dmn,
+                                                     'dmn_a': y_dna,
+                                                     'dmn_b': y_dnb}}
 
             self.subject = subject
             self._write_data(d)
@@ -256,7 +273,7 @@ class Reformat:
 
     def _process_fmri(self, files):
         '''
-        Input is [file_dan, file_dmn]
+        Input is [file_dan, file_dmn, file_dna, file_dnb]
         Convert eeg file path to a (248, 31 * 40 * 9) array
         '''
         out = []

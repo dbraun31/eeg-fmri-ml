@@ -31,6 +31,8 @@ def process_subject(subject, col_names, data_path=Path('data/formatted')):
             run_df.insert(3, 'tr', list(range(1, run_df.shape[0]+1)))
             run_df.insert(4, 'dmn', data[session][run]['y']['dmn'])
             run_df.insert(5, 'dan', data[session][run]['y']['dan'])
+            run_df.insert(6, 'dmn_a', data[session][run]['y']['dmn_a'])
+            run_df.insert(7, 'dmn_b', data[session][run]['y']['dmn_b'])
             subject_d = pd.concat([subject_d, run_df], axis=0)
 
     return subject_d
