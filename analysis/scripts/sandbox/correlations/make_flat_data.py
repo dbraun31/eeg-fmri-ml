@@ -12,8 +12,7 @@ os.chdir(here() / Path('analysis'))
 
 
 
-def process_subject(subject, data_path=Path('data/formatted'),
-                    col_names=col_names):
+def process_subject(subject, col_names, data_path=Path('data/formatted')):
 
     file = data_path / Path(f'{subject}.pkl')
     with open(file, 'rb') as file:
@@ -30,7 +29,8 @@ def process_subject(subject, data_path=Path('data/formatted'),
             run_df.insert(1, 'session', session)
             run_df.insert(2, 'run', run)
             run_df.insert(3, 'tr', list(range(1, run_df.shape[0]+1)))
-            run_df.insert(4, 'dmn', y)
+            run_df.insert(4, 'dmn', data[session][run]['y']['dmn'])
+            run_df.insert(5, 'dan', data[session][run]['y']['dan'])
             subject_d = pd.concat([subject_d, run_df], axis=0)
 
     return subject_d
@@ -62,6 +62,6 @@ if __name__ == '__main__':
     d = pd.DataFrame()
 
     for subject in subjects:
-        d = pd.concat([d, process_subject(subject)], axis=0)
+        d = pd.concat([d, process_subject(subject, col_names)], axis=0)
 
     d.reset_index(drop=True).to_feather('data/merged_data.feather')
