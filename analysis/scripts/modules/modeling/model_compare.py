@@ -202,7 +202,6 @@ class ModelCompare:
             params = cv.best_params_
             if fixed_params is not None:
                 params = cv.best_params_ | fixed_params
-            print(f'PARAMS: {params}')
             score =  get_final_score(estimator, params, self.data, self.scoring)
             scores.append((estimator_name, score))
 
