@@ -8,7 +8,9 @@ from sklearn.ensemble import RandomForestRegressor
 from glob import glob
 from pathlib import Path
 import pickle
+import sys
 os.chdir(here() / Path('analysis'))
+sys.path.insert(0, str(here() / Path('analysis')))
 from scripts.modules.modeling.baseline import BaselineModel
 from scripts.modules.modeling.model_compare import ModelCompare
 from scripts.modules.modeling.groups import get_groups
