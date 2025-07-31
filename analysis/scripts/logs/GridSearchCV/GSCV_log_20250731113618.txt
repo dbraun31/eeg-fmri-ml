@@ -1,0 +1,40 @@
+Held out run: 1
+Params: {'n_estimators': 50}
+Fold score: 14.6980237
+
+
+Held out run: 2
+Params: {'n_estimators': 50}
+Fold score: 15.7925517
+
+
+Held out run: 3
+Params: {'n_estimators': 50}
+Fold score: 14.3418392
+
+
+Held out run: 4
+Params: {'n_estimators': 50}
+Fold score: 15.2818194
+
+
+Held out run: 1
+Params: {'n_estimators': 100}
+Fold score: 14.7583173
+
+
+Held out run: 2
+Params: {'n_estimators': 100}
+Fold score: 16.1370122
+
+
+Held out run: 3
+Params: {'n_estimators': 100}
+Fold score: 14.9549309
+
+
+Held out run: 4
+Params: {'n_estimators': 100}
+Fold score: 15.3639801
+
+

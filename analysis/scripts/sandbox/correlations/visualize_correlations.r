@@ -14,6 +14,7 @@ root <- path('scripts/sandbox/correlations')
 
 if (file.exists(path(root, 'correlations_long.csv'))) {
     result <- read.csv(path(root, 'correlations_long.csv'))
+    result_run <- read.csv(path(root, 'correlations_long_byrun.csv'))
 } else {
 
     # Get channel names
@@ -42,7 +43,7 @@ ch_names = raw.info['ch_names']
       by = .(subject, session, run),
       .SDcols = voltage_cols
       ]
-    result <- result_granular[
+    result <- result_run[
           ,
           .(mean_dmn = list(Reduce(`+`, dmn_cors) / length(dmn_cors)),
             mean_dan = list(Reduce(`+`, dan_cors) / length(dan_cors)),
@@ -84,7 +85,7 @@ ch_names = raw.info['ch_names']
                frequency = as.integer(frequency),
                channel = factor(channel, levels=ch_names)) 
     
-    write.csv(result_granular, path(root, 'correlations_long_byrun.csv'), row.names=FALSE)
+    write.csv(result_run, path(root, 'correlations_long_byrun.csv'), row.names=FALSE)
     write.csv(result, path(root, 'correlations_long.csv'), row.names=FALSE)
 }
     

@@ -17,7 +17,7 @@ def get_cv_splits(session):
     # Concatenate data
     runs = list(session.keys())
     X = np.concatenate([session[x]['X'] for x in runs])
-    y = np.concatenate([session[x]['y'] for x in runs])
+    y = np.concatenate([session[x]['y']['dmn_a'] for x in runs])
 
     # Get all run indices
     run_idxs = {}
@@ -177,12 +177,12 @@ def get_final_score(estimator, params, data, scoring):
     for train_session in sessions:
         # Get data
         test_session = [s for s in sessions if s != train_session][0]
-        runs = list(data[train_session].keys())
-        X_train = np.concatenate([data[train_session][x]['X'] for x in runs])
-        y_train = np.concatenate([data[train_session][x]['y'] for x in runs])
-        X_test = np.concatenate([data[test_session][x]['X'] for x in runs])
-        y_test = np.concatenate([data[test_session][x]['y'] for x in runs])
-
+        runs_train = list(data[train_session].keys())
+        runs_test = list(data[test_session].keys())
+        X_train = np.concatenate([data[train_session][x]['X'] for x in runs_train])
+        y_train = np.concatenate([data[train_session][x]['y']['dmn_a'] for x in runs_train])
+        X_test = np.concatenate([data[test_session][x]['X'] for x in runs_test])
+        y_test = np.concatenate([data[test_session][x]['y']['dmn_a'] for x in runs_test])
         # Scale
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
@@ -190,7 +190,7 @@ def get_final_score(estimator, params, data, scoring):
 
         # Fit predict score
         model = estimator(**params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train) # Issue is here
         y_pred = model.predict(X_test)
         score = scoring(y_test, y_pred)
         scores.append(score)

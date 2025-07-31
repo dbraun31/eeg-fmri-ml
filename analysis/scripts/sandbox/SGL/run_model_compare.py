@@ -15,17 +15,6 @@ from scripts.modules.modeling.groups import get_groups
 
 
 
-# Pick a subject
-subjects = [Path(x).stem for x in glob('data/formatted/*')]
-bads = [1, 11, 13, 19, 23, 25]
-bads = ['sub-' + str(x).zfill(3) for x in bads]
-subjects = [x for x in subjects if x not in bads]
-# Random one for now
-subject = subjects[-1]
-
-
-
-
 # --- COMPARE MODELS --- #
 # Full
 estimators = {'baseline': BaselineModel,
@@ -45,16 +34,12 @@ fixed_params_dict = {'SGL': {'groups': get_groups()},
                                       'n_jobs': os.cpu_count() - 1}
                     }
 
-# Simple
-estimators = {'RandomForest': RandomForestRegressor}
-param_grids = {'RandomForest': {'n_estimators': [50, 100]}}
-fixed_params_dict = {'RandomForest': {'max_features': 'sqrt',
-                                      'n_jobs': os.cpu_count() - 1}}
-
+bads = [1, 11, 13, 19, 20, 23, 25]
 mc = ModelCompare(estimators=estimators,
                   param_grids=param_grids,
                   fixed_params_dict=fixed_params_dict,
-                  verbose=1)
+                  bads=bads,
+                  verbose=0)
 
 result = mc.run()
 

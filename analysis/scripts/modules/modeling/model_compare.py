@@ -93,6 +93,7 @@ class ModelCompare:
                  scoring=None,
                  log_dir=None,
                  groups='channels', # For future use
+                 bads=None,
                  verbose=0): 
 
         if len(estimators) != len(param_grids):
@@ -128,6 +129,13 @@ class ModelCompare:
             self.data = self._import_data(self.data_path, self.subject)
         else:
             self.subjects = [Path(x).stem for x in glob(str(self.data_path) + '/*')]
+            if all([type(x) is int for x in bads]):
+                bads = ['sub-' + str(x).zfill(3) for x in bads]
+            elif any([not bool(re.fullmatch(r'sub-\d{3}', x)) for x in bads]):
+                raise ValueError('subjects must all be either integers or in form (eg) sub-001')
+
+            self.subjects = [x for x in self.subjects if x not in bads]
+            self.subjects = sorted(self.subjects, key=lambda x: int(re.search(r'\d+', x).group()))
 
 
     def run(self):
@@ -139,7 +147,7 @@ class ModelCompare:
 
             for i, subject_raw in enumerate(self.subjects, start=1):
                 print('\n' + '/' * 2 + ' ' * 3 + 
-                      f'PROCESSING SUBJECT: {i}/{len(self.subjects)}' + 
+                      f'PROCESSING SUBJECT {subject_raw}: {i}/{len(self.subjects)}' + 
                       ' ' * 3 + '/' * 2 + '\n')
                 subject = self._parse_subject(subject_raw)
                 self.data = self._import_data(self.data_path, subject)
@@ -177,7 +185,7 @@ class ModelCompare:
             # Format data
             runs = list(self.data['ses-001'].keys())
             X = np.concatenate([self.data['ses-001'][x]['X'] for x in runs])
-            y = np.concatenate([self.data['ses-001'][x]['y'] for x in runs])
+            y = np.concatenate([self.data['ses-001'][x]['y']['dmn_a'] for x in runs])
             cv_splits = get_cv_splits(self.data['ses-001'])
 
             # Grid search
@@ -190,7 +198,12 @@ class ModelCompare:
                               scoring=self.scoring,
                               verbose=self.verbose)
             cv.fit(X, y)
-            score =  get_final_score(estimator, cv.best_params_, self.data, self.scoring)
+            # Combine params
+            params = cv.best_params_
+            if fixed_params is not None:
+                params = cv.best_params_ | fixed_params
+            print(f'PARAMS: {params}')
+            score =  get_final_score(estimator, params, self.data, self.scoring)
             scores.append((estimator_name, score))
 
             self._write_log(estimator_name, cv, score)
