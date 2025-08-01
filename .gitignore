@@ -3,4 +3,4 @@ analysis/data/
 old/
 *.pyc
 r21/
-*.csv
+**/*.csv
