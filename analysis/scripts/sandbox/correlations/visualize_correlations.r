@@ -17,6 +17,7 @@ library(RColorBrewer)
 library(reticulate)
 setwd(path(here(), 'analysis'))
 root <- path('scripts/sandbox/correlations')
+size <- 16
 
 if (file.exists(path(root, 'correlations_long.csv'))) {
     result <- read.csv(path(root, 'correlations_long.csv'))
@@ -64,8 +65,8 @@ pd %>%
     theme(panel.grid = element_blank(),
           axis.ticks = element_blank(),
           strip.background = element_rect(fill = NA),
-          text = element_text(size = 16),
-          axis.text.x = element_text(size = 12)
+          axis.text.x = element_text(size = 12),
+          text = element_text(size = size)
           )
 
 
@@ -126,7 +127,11 @@ p1 <- pd1 %>%
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'bottom')
+          legend.position = 'bottom',
+          text = element_text(size=size))
+
+ch_labels <- rep('', length(ch_names))
+ch_labels[seq(1, length(ch_labels), 3)] <- ch_names[seq(1, length(ch_labels), 3)]
     
 p2 <- pd2 %>% 
     mutate(channel = factor(channel, levels = rev(ch_names)),
@@ -144,11 +149,14 @@ p2 <- pd2 %>%
         y = 'Channel',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
+    scale_y_discrete(labels = rev(ch_labels)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'none')
+          legend.position = 'none',
+          text = element_text(size=size),
+          axis.text.y = element_text(size = 8))
 
 
 g <- ggarrange(p1, p2, nrow = 2)
@@ -202,6 +210,7 @@ pd %>%
           axis.title = element_blank(),
           strip.background = element_rect(fill = NA),
           legend.position = 'bottom',
+          text = element_text(size=size),
           axis.ticks = element_blank())
 
 ggsave(path(root, 'figures/topo.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
@@ -251,11 +260,12 @@ result_run %>%
     labs(
         x = latex2exp::TeX('$\\rho_{EEG, fMRI}'),
         y = 'Subject',
-        caption = 'DAN: freq=11, channel=O2, lag=1\nDMNa: freq=10, channel=P3, lag=1'
+        caption = 'DAN: freq=11, channel=P3, lag=2\nDMNa: freq=10, channel=P3, lag=2'
     ) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
+          text = element_text(size = size),
           strip.background = element_rect(fill = NA))
 
 ggsave(path(root, 'figures/individual_differences.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
@@ -302,7 +312,10 @@ p1 <- pd1 %>%
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'bottom')
+          legend.position = 'bottom',
+          text = element_text(size = 14),
+          strip.text.y = element_text(size = 10),
+          axis.text.y = element_text(size = 8))
     
 p2 <- pd2 %>% 
     mutate(channel = factor(channel, levels = rev(ch_names)),
@@ -320,11 +333,15 @@ p2 <- pd2 %>%
         y = 'Channel',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
+    scale_y_discrete(labels = rev(ch_labels)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'none')
+          legend.position = 'none',
+          axis.text.y = element_text(size = 8),
+          text = element_text(size = size),
+          strip.text.y = element_text(size = 12))
 
 
 g <- ggarrange(p1, p2, nrow = 2)
@@ -386,7 +403,8 @@ pd %>%
     theme(strip.background = element_rect(fill = NA),
           axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.position = 'bottom')
+          legend.position = 'bottom',
+          text = element_text(size = size))
     
 ggsave(path(root, 'figures/heatmap_with_significance.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
