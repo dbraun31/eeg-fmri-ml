@@ -1,3 +1,9 @@
+# --- MAKE ALL CORRELATION VISUALIZATIONS --- #
+# --- scripts/sandbox/correlations/correlations_long.csv needs to exist prior 
+# ---- to running this script
+# --- (this script is very RAM intensive)
+
+rm(list=ls())
 library(arrow)
 library(ggridges)
 library(tidyverse)
@@ -11,83 +17,22 @@ library(RColorBrewer)
 library(reticulate)
 setwd(path(here(), 'analysis'))
 root <- path('scripts/sandbox/correlations')
+size <- 16
 
 if (file.exists(path(root, 'correlations_long.csv'))) {
     result <- read.csv(path(root, 'correlations_long.csv'))
     result_run <- read.csv(path(root, 'correlations_long_byrun.csv'))
 } else {
-
-    # Get channel names
-    use_condaenv('eeg-fmri')
-py_run_string("
-import mne
-raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
-ch_names = raw.info['ch_names']
-")
-    ch_names <- py$ch_names
-    # Make order more logical
-    ch_names <- c(ch_names[grepl('^F', ch_names)], ch_names[grepl('^T', ch_names)],
-                  ch_names[grepl('^C', ch_names)], ch_names[grepl('^P', ch_names)],
-                  ch_names[grepl('^O', ch_names)])
-    
-    d <- data.table(read_feather('data/merged_data.feather'))
-    
-    voltage_cols <- colnames(d)[9:length(colnames(d))]
-    
-    # Big data table energy (expensive)
-    result_run <- d[,
-      .(dmn_cors = list(sapply(.SD, function(col) cor(dmn, col, use = 'pairwise.complete.obs', method='spearman'))),
-        dan_cors = list(sapply(.SD, function(col) cor(dan, col, use = 'pairwise.complete.obs', method='spearman'))),
-        dmna_cors = list(sapply(.SD, function(col) cor(dmn_a, col, use = 'pairwise.complete.obs', method='spearman'))),
-        dmnb_cors = list(sapply(.SD, function(col) cor(dmn_b, col, use = 'pairwise.complete.obs', method='spearman')))),
-      by = .(subject, session, run),
-      .SDcols = voltage_cols
-      ]
-    result <- result_run[
-          ,
-          .(mean_dmn = list(Reduce(`+`, dmn_cors) / length(dmn_cors)),
-            mean_dan = list(Reduce(`+`, dan_cors) / length(dan_cors)),
-            mean_dmna = list(Reduce(`+`, dmna_cors) / length(dmna_cors)),
-            mean_dmnb = list(Reduce(`+`, dmnb_cors) / length(dmnb_cors))),
-          by = subject
-      ][
-          ,
-          .(feature = voltage_cols, dmn_cors = unlist(mean_dmn),
-            dan_cors = unlist(mean_dan),
-            dmna_cors = unlist(mean_dmna),
-            dmnb_cors = unlist(mean_dmnb)),
-          by = subject
-      ]
-    
-    result_run <- result_run[
-        ,
-        .(feature = voltage_cols,
-          dan_cors = unlist(dan_cors),
-          dmn_cors = unlist(dmn_cors),
-          dmna_cors = unlist(dmna_cors),
-          dmnb_cors = unlist(dmnb_cors)),
-        by = .(subject, session, run)
-    ]
-    
-    result <- result %>% 
-        separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-        gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors) %>% 
-        mutate(region = str_replace(region, '_cors', ''),
-               lag = as.integer(lag),
-               frequency = as.integer(frequency),
-               channel = factor(channel, levels=ch_names)) 
-    
-    result_run <- result_run %>% 
-        separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-        gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors) %>% 
-        mutate(region = str_replace(region, '_cors', ''),
-               lag = as.integer(lag),
-               frequency = as.integer(frequency),
-               channel = factor(channel, levels=ch_names)) 
-    
-    write.csv(result_run, path(root, 'correlations_long_byrun.csv'), row.names=FALSE)
-    write.csv(result, path(root, 'correlations_long.csv'), row.names=FALSE)
+    stop('correlations_long.csv is missing. First run make_flat_data.py, then run make_long_data.r')
 }
+
+# Adjust the lag var to (s)
+result <- result %>% 
+    filter(lag <= 5) %>% 
+    mutate(lag = lag * 2)
+result_run <- result_run %>% 
+    filter(lag <= 5) %>% 
+    mutate(lag = lag * 2)
     
 # --- UNCONDITIONAL SUBJECT-LEVEL HISTOGRAMS --- #
 # DMN only
@@ -120,8 +65,8 @@ pd %>%
     theme(panel.grid = element_blank(),
           axis.ticks = element_blank(),
           strip.background = element_rect(fill = NA),
-          text = element_text(size = 16),
-          axis.text.x = element_text(size = 12)
+          axis.text.x = element_text(size = 12),
+          text = element_text(size = size)
           )
 
 
@@ -134,7 +79,7 @@ ggsave(path(root, 'figures/correlation_histograms.png'), width = 1920, height = 
 # Averaged across subject and session, and the non plotted dimension
 # x axis is frequency
 
-# Get channel coordinates
+# Get channel coordinates from Python
 use_condaenv('eeg-fmri')
 py_run_string("
 from scripts.modules.preprocessing.eeg_utils import get_channel_coordinates
@@ -172,17 +117,21 @@ p1 <- pd1 %>%
                          limits = c(small, big),
                          breaks = c(small, 0, big),
                          labels = c(small, 0, big)) + 
-    scale_y_continuous(breaks = seq(8, 0, -1), labels = seq(8, 0, -1)) +
     labs(
         x = 'Frequency (Hz)',
-        y = 'Lag(s)',
+        y = 'Lag (s)',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
+    scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'bottom')
+          legend.position = 'bottom',
+          text = element_text(size=size))
+
+ch_labels <- rep('', length(ch_names))
+ch_labels[seq(1, length(ch_labels), 3)] <- ch_names[seq(1, length(ch_labels), 3)]
     
 p2 <- pd2 %>% 
     mutate(channel = factor(channel, levels = rev(ch_names)),
@@ -200,11 +149,14 @@ p2 <- pd2 %>%
         y = 'Channel',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
+    scale_y_discrete(labels = rev(ch_labels)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'none')
+          legend.position = 'none',
+          text = element_text(size=size),
+          axis.text.y = element_text(size = 8))
 
 
 g <- ggarrange(p1, p2, nrow = 2)
@@ -219,13 +171,14 @@ ggsave(plot = g, filename = path(root, 'figures/heat_maps.png'),
 # --- PLOT TOPOS --- #
 
 # Get frequency bands
-breaks <- c(0, 4, 8, 12, 30, 100)
-labels <- c('Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+breaks <- c(0, 1, 4, 8, 12, 30, 40)
+labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
 bins <- unique(cut(result$frequency, breaks=breaks))
 labels <- paste(labels, bins, sep=' ')
 
 pd <- result %>% 
     mutate(band = cut(frequency, breaks, labels)) %>% 
+    filter(band != 'init (0,1]') %>% 
     inner_join(py$ch_pos) %>% 
     group_by(subject, x, y, band, region) %>% 
     summarize(cors = mean(cors), channel = unique(channel)) %>% 
@@ -234,13 +187,18 @@ pd <- result %>%
     mutate(z = 50, 
            region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
                            `dmna` = 'DMNa', `dmnb` = 'DMNb'))
+
+small <- floor(min(pd$cors)*100)/100
+big <- ceiling(max(pd$cors)*100)/100
+
 pd %>% 
     ggplot(aes(x = x, y = y, z = z)) + 
     geom_topo(chan_markers = 'text', aes(fill = cors, label = channel)) +
     facet_grid(region~band) + 
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
-                         values = rescale(c(min(pd$cors), 0, max(pd$cors))),
-                         limits = c(min(pd$cors), max(pd$cors))) +
+                         values = rescale(c(small, 0, big)),
+                         breaks = c(small, 0, big),
+                         limits = c(small, big)) +
     labs(
         x = '',
         y = '',
@@ -252,6 +210,7 @@ pd %>%
           axis.title = element_blank(),
           strip.background = element_rect(fill = NA),
           legend.position = 'bottom',
+          text = element_text(size=size),
           axis.ticks = element_blank())
 
 ggsave(path(root, 'figures/topo.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
@@ -289,8 +248,8 @@ peaks <- rbind(channel, lag)
 
 # Plot
 result_run %>% 
-    filter((channel=='O2' & frequency==11 & region=='dan' & lag==1) | 
-            (channel=='P3' & frequency==10 & region=='dmna' & lag==1)) %>% 
+    filter((channel=='P3' & frequency==10 & region=='dan' & lag==2) | 
+            (channel=='P3' & frequency==10 & region=='dmna' & lag==2)) %>% 
     group_by(subject, session, run, region) %>% 
     summarize(cors = mean(cors)) %>% 
     mutate(region = recode(region, `dan` = 'DAN', `dmna` = 'DMNa')) %>% 
@@ -301,11 +260,12 @@ result_run %>%
     labs(
         x = latex2exp::TeX('$\\rho_{EEG, fMRI}'),
         y = 'Subject',
-        caption = 'DAN: freq=11, channel=O2, lag=1\nDMNa: freq=10, channel=P3, lag=1'
+        caption = 'DAN: freq=11, channel=P3, lag=2\nDMNa: freq=10, channel=P3, lag=2'
     ) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
+          text = element_text(size = size),
           strip.background = element_rect(fill = NA))
 
 ggsave(path(root, 'figures/individual_differences.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
@@ -352,7 +312,10 @@ p1 <- pd1 %>%
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'bottom')
+          legend.position = 'bottom',
+          text = element_text(size = 14),
+          strip.text.y = element_text(size = 10),
+          axis.text.y = element_text(size = 8))
     
 p2 <- pd2 %>% 
     mutate(channel = factor(channel, levels = rev(ch_names)),
@@ -370,11 +333,15 @@ p2 <- pd2 %>%
         y = 'Channel',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
+    scale_y_discrete(labels = rev(ch_labels)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
-          legend.position = 'none')
+          legend.position = 'none',
+          axis.text.y = element_text(size = 8),
+          text = element_text(size = size),
+          strip.text.y = element_text(size = 12))
 
 
 g <- ggarrange(p1, p2, nrow = 2)
@@ -385,8 +352,63 @@ ggsave(path(root, 'figures/heatmap_by_task.png'), height = 1080, width = 1920, u
 
 
 
+# -- FREQ X LAG WITH SIGNIFICANCE -- #
+
+breaks <- c(0, 1, 4, 8, 12, 30, 40)
+labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+bins <- unique(cut(result$frequency, breaks=breaks))
+labels <- paste(labels, bins, sep=' ')
 
 
+ps <- result %>% 
+    mutate(bin = cut(frequency, breaks, labels)) %>% 
+    filter(bin != 'init (0,1]') %>% 
+    group_by(subject, lag, region, bin) %>% 
+    summarize(cors = mean(cors)) %>% 
+    group_by(lag, region, bin) %>% 
+    summarize(p = t.test(cors, mu = 0)$p.value) %>% 
+    mutate(p_adj = p.adjust(p, method='fdr')) %>% 
+    filter(p_adj < .05) %>% 
+    mutate(region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb'))
+    
+
+pd <- result %>% 
+    mutate(bin = cut(frequency, breaks, labels)) %>% 
+    filter(bin != 'init (0,1]') %>% 
+    group_by(bin, lag, region) %>% 
+    summarize(cors = mean(cors)) %>% 
+    mutate(region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb'))
+
+small <- floor(min(pd$cors)*100)/100
+big <- ceiling(max(pd$cors)*100)/100
+
+pd %>%     
+    ggplot(aes(x = bin, y = lag)) + 
+    geom_tile(aes(fill = cors)) + 
+    geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 5) + 
+    facet_wrap(~region) + 
+    scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+                         values = rescale(c(small, 0, big)),
+                         breaks = c(small, 0, big),
+                         limits = c(small, big)) + 
+    labs(
+        x = 'Frequency bin',
+        y = 'Lag (s)',
+        fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
+    ) + 
+    theme_bw() + 
+    theme(strip.background = element_rect(fill = NA),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = 'bottom',
+          text = element_text(size = size))
+    
+ggsave(path(root, 'figures/heatmap_with_significance.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
+
+                         
 
 
 
