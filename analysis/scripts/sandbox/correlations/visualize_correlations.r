@@ -28,11 +28,15 @@ if (file.exists(path(root, 'correlations_long.csv'))) {
 
 # Adjust the lag var to (s)
 result <- result %>% 
-    filter(lag <= 5) %>% 
-    mutate(lag = lag * 2)
+    mutate(lag = lag * 2,
+           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa')) %>% 
+    filter(region != "DAN - DMNa")
 result_run <- result_run %>% 
-    filter(lag <= 5) %>% 
-    mutate(lag = lag * 2)
+    mutate(lag = lag * 2,
+           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa')) %>% 
+    filter(region != "DAN - DMNa")
     
 # --- UNCONDITIONAL SUBJECT-LEVEL HISTOGRAMS --- #
 # DMN only
@@ -108,7 +112,6 @@ small <- floor(min(pd1$cors, pd2$cors) * 100) / 100
 
 # Plot
 p1 <- pd1 %>% 
-    mutate(region = recode(region, `dmn` = 'DMN', `dan` = 'DAN', `dmna` = 'DMNa', `dmnb` = 'DMNb')) %>% 
     ggplot(aes(x = frequency, y = lag)) +
     geom_tile(aes(fill = cors)) + 
     facet_wrap(~region) +
@@ -122,7 +125,7 @@ p1 <- pd1 %>%
         y = 'Lag (s)',
         fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
     ) + 
-    scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) + 
+    scale_y_continuous(breaks = seq(0, max(result$lag), 2), labels = seq(0, max(result$lag), 2)) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
@@ -134,8 +137,7 @@ ch_labels <- rep('', length(ch_names))
 ch_labels[seq(1, length(ch_labels), 3)] <- ch_names[seq(1, length(ch_labels), 3)]
     
 p2 <- pd2 %>% 
-    mutate(channel = factor(channel, levels = rev(ch_names)),
-           region = recode(region, `dmn` = 'DMN', `dan` = 'DAN', `dmna` = 'DMNa', `dmnb` = 'DMNb')) %>% 
+    mutate(channel = factor(channel, levels = rev(ch_names))) %>% 
     ggplot(aes(x = frequency, y = channel)) + 
     geom_tile(aes(fill = cors)) + 
     facet_wrap(~region) + 
@@ -302,7 +304,7 @@ p1 <- pd1 %>%
                          limits = c(small, big),
                          breaks = c(small, 0, big),
                          labels = c(small, 0, big)) + 
-    scale_y_continuous(breaks = seq(8, 0, -1), labels = seq(8, 0, -1)) +
+    scale_y_continuous(breaks = seq(0, max(result$lag), 2), labels = seq(0, max(result$lag), 2)) +
     labs(
         x = 'Frequency (Hz)',
         y = 'Lag(s)',
@@ -362,7 +364,7 @@ labels <- paste(labels, bins, sep=' ')
 
 ps <- result %>% 
     mutate(bin = cut(frequency, breaks, labels)) %>% 
-    filter(bin != 'init (0,1]') %>% 
+    filter(bin != 'init (0,1]', lag <= 10) %>% 
     group_by(subject, lag, region, bin) %>% 
     summarize(cors = mean(cors)) %>% 
     group_by(lag, region, bin) %>% 
@@ -375,7 +377,7 @@ ps <- result %>%
 
 pd <- result %>% 
     mutate(bin = cut(frequency, breaks, labels)) %>% 
-    filter(bin != 'init (0,1]') %>% 
+    filter(bin != 'init (0,1]', lag <= 10) %>% 
     group_by(bin, lag, region) %>% 
     summarize(cors = mean(cors)) %>% 
     mutate(region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
