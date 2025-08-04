@@ -4,3 +4,4 @@ old/
 *.pyc
 r21/
 **/*.csv
+**/logs/
