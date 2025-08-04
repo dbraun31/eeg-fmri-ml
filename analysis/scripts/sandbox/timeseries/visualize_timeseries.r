@@ -11,14 +11,10 @@ root <- path('scripts/sandbox/timeseries')
 # Import
 d <- read_feather('data/merged_data.feather')
 d <- d %>% 
-    filter(run != 'run-001') %>% 
     select(subject:dmn_b)
 
-
-
 d %>% 
-    filter(subject == 'sub-024', session == 'ses-001', run == 'run-002',
-           tr < 50) %>% 
+    filter(tr < 50) %>% 
     gather(region, bold, dmn:dmn_b) %>% 
     mutate(contrast = ifelse(region %in% c('dmn', 'dan'), 'DMN-DAN', 'DMNa-DMNb'),
            region = recode(region, `dan` = 'DAN', `dmn` = 'DMN', `dmn_a` = 'DMNa', `dmn_b` = 'DMNb'),
