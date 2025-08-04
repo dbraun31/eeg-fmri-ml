@@ -157,10 +157,11 @@ class Reformat:
         return m
 
 
-    def _process_eeg(self, file_eeg):
+    def _process_eeg(self, file_eeg, num_lags=11):
         '''
         Convert eeg file path to a (248, 31 * 40 * 9) array
         Needs to update to epoch 2 s back from TR marker
+        num_lags includes lag 0
         '''
 
         # Open EEGlab file
@@ -214,7 +215,6 @@ class Reformat:
         tf = tf.transpose(2, 0, 1)
 
         # Get the lags
-        num_lags = 9
         lag_ar = np.zeros((tf.shape[0], tf.shape[1], tf.shape[2], num_lags))
 
         # Only fill in starting at TR 9 so can fully backfill with lags
@@ -223,7 +223,7 @@ class Reformat:
                 lag_ar[i, :, :, lag] = tf[i-lag, :, :]
 
         # We're starting at TR 9
-        ar = lag_ar[8:, :, :, :]
+        ar = lag_ar[(num_lags-1):, :, :, :]
         # Reshape to (248, 31 * 40 * 9)
         ar_reshape = ar.reshape(ar.shape[0], -1)
 
