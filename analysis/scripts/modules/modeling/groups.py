@@ -7,7 +7,7 @@ def get_groups():
 
     n_channels = 31
     n_freqs = 40
-    n_lags = 9
+    n_lags = 11
     n_features = n_channels * n_freqs * n_lags
 
     idxs = np.arange(n_features)

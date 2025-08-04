@@ -1,0 +1,16 @@
+--------------------
+
+          SUBJECT: sub-002
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 13:54:25
+Best parameters: {}
+Best CV score: 26.3352
+Final held-out score: 23.379449
+
+All CV results:
+- Params: {}, Mean CV score: 26.3352, Std CV score: 3.2233
+====================

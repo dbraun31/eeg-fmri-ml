@@ -40,7 +40,7 @@ def process_subject(subject, col_names, data_path=Path('data/formatted')):
 
 def make_column_names(channels):
     freqs = list(range(1, 41))
-    lags = list(range(9))
+    lags = list(range(11))
     
     col_names_tuple = list(product(channels, freqs, lags))
 

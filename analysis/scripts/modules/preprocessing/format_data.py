@@ -15,11 +15,12 @@ from scipy.signal import butter, filtfilt
 
 class Reformat:
 
-    def __init__(self, subjects, overwrite=False):
+    def __init__(self, subjects, num_lags, overwrite=False):
         self.subjects = subjects
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
         self.data_path = Path('analysis/data/formatted')
+        self.num_lags = num_lags
         self.data_path.mkdir(parents=True, exist_ok=True)
         completed = glob(str(self.data_path / Path('sub')) + '*')
         self.completed = [Path(x).stem for x in completed]
@@ -157,13 +158,14 @@ class Reformat:
         return m
 
 
-    def _process_eeg(self, file_eeg, num_lags=11):
+    def _process_eeg(self, file_eeg):
         '''
         Convert eeg file path to a (248, 31 * 40 * 9) array
         Needs to update to epoch 2 s back from TR marker
         num_lags includes lag 0
         '''
 
+        num_lags = self.num_lags
         # Open EEGlab file
         try:
             raw = mne.io.read_raw_eeglab(file_eeg)
@@ -222,7 +224,7 @@ class Reformat:
             for lag in range(num_lags):
                 lag_ar[i, :, :, lag] = tf[i-lag, :, :]
 
-        # We're starting at TR 9
+        # We're starting at TR num_lags-1
         ar = lag_ar[(num_lags-1):, :, :, :]
         # Reshape to (248, 31 * 40 * 9)
         ar_reshape = ar.reshape(ar.shape[0], -1)
@@ -277,6 +279,7 @@ class Reformat:
         Convert eeg file path to a (248, 31 * 40 * 9) array
         '''
         out = []
+        num_lags = self.num_lags
 
         for file in files:
 
@@ -284,7 +287,7 @@ class Reformat:
                 d = f.readlines()
 
             # Chop off first 8 observations
-            d = np.array([float(x.strip()) for x in d])[8:]
+            d = np.array([float(x.strip()) for x in d])[(num_lags-1):]
 
             out.append(d)
 
@@ -295,7 +298,8 @@ if __name__ == '__main__':
 
     os.chdir(here())
     subjects = sorted([Path(x).name for x in glob('analysis/data/original/*') if 'sub' in x])
-    reformat = Reformat(subjects)
+    num_lags=11
+    reformat = Reformat(subjects, num_lags=num_lags)
     reformat.run()
 
 

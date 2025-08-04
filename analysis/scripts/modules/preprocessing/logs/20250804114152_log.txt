@@ -1,4 +1,0 @@
-
-Unequal observations for sub-001 ses-001 bld001, X: 230, y_dan: 232, y_dmn: 232. Skipping run.
-
-Unequal observations for sub-001 ses-001 bld002, X: 284, y_dan: 285, y_dmn: 285. Skipping run.

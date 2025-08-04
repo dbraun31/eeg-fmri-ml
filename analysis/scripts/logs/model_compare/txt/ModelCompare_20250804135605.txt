@@ -1,0 +1,376 @@
+--------------------
+
+          SUBJECT: sub-002
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 13:56:05
+Best parameters: {}
+Best CV score: 26.3352
+Final held-out score: 23.379449
+
+All CV results:
+- Params: {}, Mean CV score: 26.3352, Std CV score: 3.2233
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 14:00:13
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.9}
+Best CV score: 151.9905
+Final held-out score: 48.587657
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 153.0116, Std CV score: 202.5280
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 152.9754, Std CV score: 202.4652
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 152.9754, Std CV score: 202.4652
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 154.0922, Std CV score: 204.4001
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 153.4088, Std CV score: 203.2789
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 153.0737, Std CV score: 202.6355
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 153.5412, Std CV score: 203.2752
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 153.8865, Std CV score: 203.8641
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 151.9905, Std CV score: 200.7204
+Nonzero coefficients (best model): 13638 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 14:01:02
+Best parameters: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}
+Best CV score: 26.2606
+Final held-out score: 23.288274
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 26.6518, Std CV score: 3.0199
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 26.7029, Std CV score: 2.8740
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 26.5191, Std CV score: 2.9962
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 26.5179, Std CV score: 2.9305
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 26.4091, Std CV score: 2.8639
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 26.5550, Std CV score: 3.2026
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 26.5958, Std CV score: 2.8399
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 26.5841, Std CV score: 3.0733
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 26.4527, Std CV score: 2.9833
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 26.3991, Std CV score: 3.1566
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 26.3927, Std CV score: 2.9706
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 26.3883, Std CV score: 3.0787
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 26.2896, Std CV score: 2.9862
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 26.2606, Std CV score: 3.1027
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 26.3661, Std CV score: 2.9503
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 26.3713, Std CV score: 2.9873
+====================
+--------------------
+
+          SUBJECT: sub-003
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 14:01:02
+Best parameters: {}
+Best CV score: 18.1415
+Final held-out score: 17.485563
+
+All CV results:
+- Params: {}, Mean CV score: 18.1415, Std CV score: 1.0023
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 14:02:26
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.9}
+Best CV score: 59.0559
+Final held-out score: 29.324577
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 59.6906, Std CV score: 32.9500
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 59.6612, Std CV score: 32.9196
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 59.6426, Std CV score: 32.8999
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 59.6774, Std CV score: 32.9390
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 59.6523, Std CV score: 32.9116
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 59.6310, Std CV score: 32.8919
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 59.4143, Std CV score: 32.7639
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 59.2191, Std CV score: 32.5868
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 59.0559, Std CV score: 32.4419
+Nonzero coefficients (best model): 13638 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 14:02:43
+Best parameters: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}
+Best CV score: 18.2982
+Final held-out score: 17.781118
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 18.6099, Std CV score: 0.7819
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 19.0624, Std CV score: 0.6786
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 19.4194, Std CV score: 1.1364
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 19.0018, Std CV score: 0.9228
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 18.4719, Std CV score: 0.9186
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 18.7851, Std CV score: 1.3429
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 19.0052, Std CV score: 0.3014
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 18.8889, Std CV score: 0.9939
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 18.8123, Std CV score: 0.8833
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 18.4902, Std CV score: 1.1137
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 18.7229, Std CV score: 1.1191
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 18.2982, Std CV score: 1.3013
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 18.7063, Std CV score: 1.1938
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 18.7556, Std CV score: 0.8044
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 18.4512, Std CV score: 0.9305
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 18.4831, Std CV score: 0.9625
+====================
+--------------------
+
+          SUBJECT: sub-004
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 14:02:44
+Best parameters: {}
+Best CV score: 14.8625
+Final held-out score: 18.030310
+
+All CV results:
+- Params: {}, Mean CV score: 14.8625, Std CV score: 0.7606
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 14:06:45
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.5}
+Best CV score: 20.9595
+Final held-out score: 25.238133
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 21.0255, Std CV score: 5.2522
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 21.0319, Std CV score: 5.2467
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 21.0233, Std CV score: 5.2382
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 20.9999, Std CV score: 5.2644
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 21.0235, Std CV score: 5.2707
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 21.0009, Std CV score: 5.2677
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 20.9882, Std CV score: 5.2351
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 20.9595, Std CV score: 5.2511
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 20.9707, Std CV score: 5.2412
+Nonzero coefficients (best model): 13640 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 14:07:34
+Best parameters: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}
+Best CV score: 14.9210
+Final held-out score: 18.200795
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 15.0981, Std CV score: 0.8038
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 15.0957, Std CV score: 0.6290
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 15.1660, Std CV score: 0.6654
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 15.0306, Std CV score: 0.7130
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 15.2334, Std CV score: 0.8433
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 15.0292, Std CV score: 0.7200
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 15.0015, Std CV score: 0.7462
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 14.9609, Std CV score: 0.5635
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 15.0337, Std CV score: 0.6995
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 14.9210, Std CV score: 0.8254
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 15.0529, Std CV score: 0.8499
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 15.1216, Std CV score: 0.8792
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 14.9409, Std CV score: 0.8084
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 15.0436, Std CV score: 0.8040
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 14.9753, Std CV score: 0.6733
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 14.9901, Std CV score: 0.7314
+====================
+--------------------
+
+          SUBJECT: sub-006
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 14:07:35
+Best parameters: {}
+Best CV score: 24.3023
+Final held-out score: 24.906212
+
+All CV results:
+- Params: {}, Mean CV score: 24.3023, Std CV score: 2.3295
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 14:11:41
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.9}
+Best CV score: 142.2391
+Final held-out score: 32.444269
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 142.9300, Std CV score: 188.2921
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 142.9638, Std CV score: 188.3042
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 142.9137, Std CV score: 188.3387
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 142.9933, Std CV score: 188.4857
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 143.0450, Std CV score: 188.3921
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 143.0174, Std CV score: 188.4476
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 142.8149, Std CV score: 188.0627
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 142.4939, Std CV score: 187.6480
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 142.2391, Std CV score: 187.0928
+Nonzero coefficients (best model): 13639 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 14:12:41
+Best parameters: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}
+Best CV score: 24.2796
+Final held-out score: 24.864261
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 24.5721, Std CV score: 2.2051
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 24.7837, Std CV score: 2.3329
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 24.4679, Std CV score: 2.3132
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 24.4171, Std CV score: 2.2633
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 24.4484, Std CV score: 2.2680
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 24.6041, Std CV score: 2.4205
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 24.4529, Std CV score: 2.4356
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 24.4429, Std CV score: 2.3342
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 24.4914, Std CV score: 2.4915
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 24.3157, Std CV score: 2.2629
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 24.3396, Std CV score: 2.2495
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 24.4228, Std CV score: 2.3474
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 24.3071, Std CV score: 2.2927
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 24.3521, Std CV score: 2.3733
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 24.2796, Std CV score: 2.2400
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 24.4434, Std CV score: 2.2600
+====================
+--------------------
+
+          SUBJECT: sub-007
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 14:12:42
+Best parameters: {}
+Best CV score: 30.0872
+Final held-out score: 32.971999
+
+All CV results:
+- Params: {}, Mean CV score: 30.0872, Std CV score: 2.4903
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 14:17:28
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.9}
+Best CV score: 143.3719
+Final held-out score: 92.956791
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 144.7668, Std CV score: 190.7020
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 144.8232, Std CV score: 190.6683
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 144.9102, Std CV score: 190.8601
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 143.6204, Std CV score: 188.5951
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 144.2745, Std CV score: 189.6866
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 144.9812, Std CV score: 190.9274
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 144.2312, Std CV score: 189.8281
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 146.6562, Std CV score: 194.0819
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 143.3719, Std CV score: 188.3608
+Nonzero coefficients (best model): 13640 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 14:18:23
+Best parameters: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}
+Best CV score: 29.6397
+Final held-out score: 32.989483
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 29.9159, Std CV score: 2.3117
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 29.9283, Std CV score: 2.5666
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 29.8521, Std CV score: 2.4352
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 29.9917, Std CV score: 2.5189
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 29.8391, Std CV score: 2.5577
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 29.9322, Std CV score: 2.4915
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 29.8622, Std CV score: 2.4693
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 29.9853, Std CV score: 2.4310
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 29.7746, Std CV score: 2.4838
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 29.7660, Std CV score: 2.6070
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 29.6686, Std CV score: 2.6421
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 29.7126, Std CV score: 2.5306
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 29.7573, Std CV score: 2.3454
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 29.7639, Std CV score: 2.3664
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 29.7667, Std CV score: 2.4656
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 29.6397, Std CV score: 2.5114
+====================
+--------------------
+
+          SUBJECT: sub-008
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 14:18:23
+Best parameters: {}
+Best CV score: 28.9421
+Final held-out score: 27.554291
+
+All CV results:
+- Params: {}, Mean CV score: 28.9421, Std CV score: 3.3482
+====================
+====================
+Estimator: SGL
+Date: 2025-08-04 15:26:26
+Best parameters: {'alpha': 0.001, 'l1_ratio': 0.5}
+Best CV score: 41.6318
+Final held-out score: 94.811422
+
+All CV results:
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.1}, Mean CV score: 41.7525, Std CV score: 6.2999
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.5}, Mean CV score: 41.7526, Std CV score: 6.2893
+- Params: {'alpha': 1e-07, 'l1_ratio': 0.9}, Mean CV score: 41.6601, Std CV score: 6.2033
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.1}, Mean CV score: 41.7106, Std CV score: 6.2447
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.5}, Mean CV score: 41.6870, Std CV score: 6.2736
+- Params: {'alpha': 1e-05, 'l1_ratio': 0.9}, Mean CV score: 41.8404, Std CV score: 6.4272
+- Params: {'alpha': 0.001, 'l1_ratio': 0.1}, Mean CV score: 41.6718, Std CV score: 6.1278
+- Params: {'alpha': 0.001, 'l1_ratio': 0.5}, Mean CV score: 41.6318, Std CV score: 6.2497
+- Params: {'alpha': 0.001, 'l1_ratio': 0.9}, Mean CV score: 41.6446, Std CV score: 6.2381
+Nonzero coefficients (best model): 13640 / 13640
+====================
+====================
+Estimator: RandomForest
+Date: 2025-08-04 15:27:24
+Best parameters: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}
+Best CV score: 28.0279
+Final held-out score: 27.891438
+
+All CV results:
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 28.3067, Std CV score: 3.4096
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 28.6282, Std CV score: 3.5123
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 28.2302, Std CV score: 3.5294
+- Params: {'n_estimators': 50, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 28.3662, Std CV score: 3.2353
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 28.3007, Std CV score: 3.1825
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 28.2900, Std CV score: 3.4153
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 28.3328, Std CV score: 3.2984
+- Params: {'n_estimators': 50, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 28.2073, Std CV score: 3.2733
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 28.0279, Std CV score: 3.3132
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 28.2740, Std CV score: 3.2744
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 28.2694, Std CV score: 3.0777
+- Params: {'n_estimators': 100, 'max_depth': None, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 28.1202, Std CV score: 3.2211
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 1}, Mean CV score: 28.2467, Std CV score: 3.1978
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 2, 'min_samples_leaf': 2}, Mean CV score: 28.2003, Std CV score: 3.0978
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 1}, Mean CV score: 28.0885, Std CV score: 3.2891
+- Params: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 5, 'min_samples_leaf': 2}, Mean CV score: 28.2606, Std CV score: 3.3419
+====================
+--------------------
+
+          SUBJECT: sub-009
+
+--------------------
+
+====================
+Estimator: baseline
+Date: 2025-08-04 15:27:25
+Best parameters: {}
+Best CV score: 33.2388
+Final held-out score: 33.402684
+
+All CV results:
+- Params: {}, Mean CV score: 33.2388, Std CV score: 4.3554
+====================
