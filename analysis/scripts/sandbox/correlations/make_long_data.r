@@ -32,33 +32,25 @@ d <- data.table(read_feather('data/merged_data.feather'))
 # Assumes first feature column is 'Fp1_1_0'
 voltage_cols <- colnames(d)[which(colnames(d)=='Fp1_1_0'):length(colnames(d))]
 
+d <- d[, dan_dmna_diff := dan - dmn_a]
+
+
 # Big data table energy (expensive)
 # Run correlations
+cor_func <- function(ref_col, data) {
+    sapply(data, function(col) cor(ref_col, col, use = 'pairwise.complete.obs', method='spearman'))
+}
+    
 result_run <- d[,
-                .(dmn_cors = list(sapply(.SD, function(col) cor(dmn, col, use = 'pairwise.complete.obs', method='spearman'))),
-                  dan_cors = list(sapply(.SD, function(col) cor(dan, col, use = 'pairwise.complete.obs', method='spearman'))),
-                  dmna_cors = list(sapply(.SD, function(col) cor(dmn_a, col, use = 'pairwise.complete.obs', method='spearman'))),
-                  dmnb_cors = list(sapply(.SD, function(col) cor(dmn_b, col, use = 'pairwise.complete.obs', method='spearman')))),
+                .(dmn_cors = list(cor_func(dmn, .SD)),
+                  dan_cors = list(cor_func(dan, .SD)),
+                  dmna_cors = list(cor_func(dmn_a, .SD)),
+                  dmnb_cors = list(cor_func(dmn_b, .SD)),
+                  diff_cors = list(cor_func(dan_dmna_diff, .SD))),
                 by = .(subject, session, run),
                 .SDcols = voltage_cols
 ]
-# Average by run
-result <- result_run[
-    ,
-    .(mean_dmn = list(Reduce(`+`, dmn_cors) / length(dmn_cors)),
-      mean_dan = list(Reduce(`+`, dan_cors) / length(dan_cors)),
-      mean_dmna = list(Reduce(`+`, dmna_cors) / length(dmna_cors)),
-      mean_dmnb = list(Reduce(`+`, dmnb_cors) / length(dmnb_cors))),
-    by = subject
-][
-    # Unlist
-    ,
-    .(feature = voltage_cols, dmn_cors = unlist(mean_dmn),
-      dan_cors = unlist(mean_dan),
-      dmna_cors = unlist(mean_dmna),
-      dmnb_cors = unlist(mean_dmnb)),
-    by = subject
-]
+
 
 # Unlist
 result_run <- result_run[
@@ -67,26 +59,27 @@ result_run <- result_run[
       dan_cors = unlist(dan_cors),
       dmn_cors = unlist(dmn_cors),
       dmna_cors = unlist(dmna_cors),
-      dmnb_cors = unlist(dmnb_cors)),
+      dmnb_cors = unlist(dmnb_cors),
+      diff_cors = unlist(diff_cors)),
     by = .(subject, session, run)
 ]
 
 # Final formatting
-result <- result %>% 
-    separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-    gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors) %>% 
-    mutate(region = str_replace(region, '_cors', ''),
-           lag = as.integer(lag),
-           frequency = as.integer(frequency),
-           channel = factor(channel, levels=ch_names)) 
 
 result_run <- result_run %>% 
     separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-    gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors) %>% 
+    gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors, diff_cors) %>% 
     mutate(region = str_replace(region, '_cors', ''),
            lag = as.integer(lag),
            frequency = as.integer(frequency),
            channel = factor(channel, levels=ch_names)) 
 
+result <- result_run %>% 
+    group_by(subject, channel, lag, frequency, region) %>% 
+    summarize(cors = mean(cors))
+
 write.csv(result_run, path(root, 'correlations_long_byrun.csv'), row.names=FALSE)
 write.csv(result, path(root, 'correlations_long.csv'), row.names=FALSE)
+
+
+
