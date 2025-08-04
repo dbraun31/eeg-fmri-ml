@@ -20,8 +20,8 @@ root <- path('scripts/sandbox/correlations')
 size <- 16
 
 if (file.exists(path(root, 'correlations_long.csv'))) {
-    result <- read.csv(path(root, 'correlations_long.csv'))
-    result_run <- read.csv(path(root, 'correlations_long_byrun.csv'))
+    result <- fread(path(root, 'correlations_long.csv'))
+    result_run <- fread(path(root, 'correlations_long_byrun.csv'))
 } else {
     stop('correlations_long.csv is missing. First run make_flat_data.py, then run make_long_data.r')
 }
@@ -43,8 +43,8 @@ result_run <- result_run %>%
 
 pd <- result %>% 
     spread(region, cors) %>% 
-    rename(mean_cors = dmn) %>% 
-    select(-dan) %>% 
+    rename(mean_cors = DMN) %>% 
+    select(-DAN) %>% 
     unite(feature, channel, frequency, lag, sep = '_') 
     
     
@@ -130,6 +130,7 @@ p1 <- pd1 %>%
     theme(strip.background = element_rect(fill = NA),
           panel.grid = element_blank(),
           axis.ticks = element_blank(),
+          axis.text.y = element_text(size = 8),
           legend.position = 'bottom',
           text = element_text(size=size))
 
@@ -162,7 +163,6 @@ p2 <- pd2 %>%
 
 
 g <- ggarrange(p1, p2, nrow = 2)
-g
 
 # Screens
 ggsave(plot = g, filename = path(root, 'figures/heat_maps.png'), 
@@ -227,7 +227,7 @@ ggsave(path(root, 'figures/topo.png'), height = 1080, width = 1920, units = 'px'
 # Identify strongest tiles
 
 channel <- result %>% 
-    filter(region %in% c('dan', 'dmna')) %>% 
+    filter(region %in% c('DAN', 'DMNa')) %>% 
     group_by(subject, channel, frequency, region) %>% 
     summarize(cors = mean(cors)) %>% 
     group_by(channel, frequency, region) %>% 
@@ -237,7 +237,7 @@ channel <- result %>%
     mutate(lag = NA)
     
 lag <- result %>% 
-    filter(region %in% c('dan', 'dmna')) %>% 
+    filter(region %in% c('DAN', 'DMNa')) %>% 
     group_by(subject, lag, frequency, region) %>% 
     summarize(cors = mean(cors)) %>% 
     group_by(lag, frequency, region) %>% 
@@ -250,11 +250,10 @@ peaks <- rbind(channel, lag)
 
 # Plot
 result_run %>% 
-    filter((channel=='P3' & frequency==10 & region=='dan' & lag==2) | 
-            (channel=='P3' & frequency==10 & region=='dmna' & lag==2)) %>% 
+    filter((channel=='P3' & frequency==10 & region=='DAN' & lag==2) | 
+            (channel=='P3' & frequency==10 & region=='DMNa' & lag==2)) %>% 
     group_by(subject, session, run, region) %>% 
     summarize(cors = mean(cors)) %>% 
-    mutate(region = recode(region, `dan` = 'DAN', `dmna` = 'DMNa')) %>% 
     ggplot(aes(x = cors, y = subject)) +
     geom_vline(xintercept = 0, linetype = 'dashed') + 
     geom_density_ridges(stat='binline', color = 'black', fill = 'steelblue', alpha = .6) + 
@@ -295,7 +294,6 @@ small <- floor(min(pd1$cors, pd2$cors) * 100) / 100
 
 # Plot
 p1 <- pd1 %>% 
-    mutate(region = recode(region, `dmn` = 'DMN', `dan` = 'DAN', `dmna` = 'DMNa', `dmnb` = 'DMNb')) %>% 
     ggplot(aes(x = frequency, y = lag)) +
     geom_tile(aes(fill = cors)) + 
     facet_grid(task~region) +
@@ -320,8 +318,7 @@ p1 <- pd1 %>%
           axis.text.y = element_text(size = 8))
     
 p2 <- pd2 %>% 
-    mutate(channel = factor(channel, levels = rev(ch_names)),
-           region = recode(region, `dmn` = 'DMN', `dan` = 'DAN', `dmna` = 'DMNa', `dmnb` = 'DMNb')) %>% 
+    mutate(channel = factor(channel, levels = rev(ch_names))) %>% 
     ggplot(aes(x = frequency, y = channel)) + 
     geom_tile(aes(fill = cors)) + 
     facet_grid(task~region) + 
@@ -370,18 +367,14 @@ ps <- result %>%
     group_by(lag, region, bin) %>% 
     summarize(p = t.test(cors, mu = 0)$p.value) %>% 
     mutate(p_adj = p.adjust(p, method='fdr')) %>% 
-    filter(p_adj < .05) %>% 
-    mutate(region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
-                           `dmna` = 'DMNa', `dmnb` = 'DMNb'))
+    filter(p_adj < .05) 
     
 
 pd <- result %>% 
     mutate(bin = cut(frequency, breaks, labels)) %>% 
     filter(bin != 'init (0,1]', lag <= 10) %>% 
     group_by(bin, lag, region) %>% 
-    summarize(cors = mean(cors)) %>% 
-    mutate(region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
-                           `dmna` = 'DMNa', `dmnb` = 'DMNb'))
+    summarize(cors = mean(cors)) 
 
 small <- floor(min(pd$cors)*100)/100
 big <- ceiling(max(pd$cors)*100)/100
@@ -416,6 +409,90 @@ ggsave(path(root, 'figures/heatmap_with_significance.png'), height = 1080, width
 
 
 
+
+# --- BY TASK WITH DIFFERENCE REGION --- #
+
+result_run <- fread(path(root, 'correlations_long_byrun.csv'))
+
+result_run <- result_run %>% 
+    mutate(lag = lag * 2,
+           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa')) 
+
+# Prep data
+pd1 <- result_run %>% 
+    mutate(task = ifelse(run == 'run-001', 'GradCPT', 'ExperienceSampling')) %>% 
+    group_by(subject, lag, frequency, region, task) %>% 
+    summarize(cors = mean(cors)) %>% 
+    group_by(lag, frequency, region, task) %>% 
+    summarize(cors = mean(cors)) 
+pd2 <- result_run %>% 
+    mutate(task = ifelse(run == 'run-001', 'GradCPT', 'ExperienceSampling')) %>% 
+    group_by(subject, channel, frequency, region, task) %>% 
+    summarize(cors = mean(cors)) %>% 
+    group_by(channel, frequency, region, task) %>% 
+    summarize(cors = mean(cors)) 
+
+# Find range of cors
+big <- ceiling(max(pd1$cors, pd2$cors) * 100) / 100
+small <- floor(min(pd1$cors, pd2$cors) * 100) / 100
+
+# Plot
+p1 <- pd1 %>% 
+    ggplot(aes(x = frequency, y = lag)) +
+    geom_tile(aes(fill = cors)) + 
+    facet_grid(task~region) +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+                         values = rescale(c(min(pd1$cors, pd2$cors), 0, max(pd1$cors, pd2$cors))),
+                         limits = c(small, big),
+                         breaks = c(small, 0, big),
+                         labels = c(small, 0, big)) + 
+    scale_y_continuous(breaks = seq(0, max(result$lag), 2), labels = seq(0, max(result$lag), 2)) +
+    labs(
+        x = 'Frequency (Hz)',
+        y = 'Lag(s)',
+        fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
+    ) + 
+    theme_bw() + 
+    theme(strip.background = element_rect(fill = NA),
+          panel.grid = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position = 'bottom',
+          text = element_text(size = 14),
+          strip.text.y = element_text(size = 10),
+          axis.text.y = element_text(size = 8))
+    
+p2 <- pd2 %>% 
+    mutate(channel = factor(channel, levels = rev(ch_names))) %>% 
+    ggplot(aes(x = frequency, y = channel)) + 
+    geom_tile(aes(fill = cors)) + 
+    facet_grid(task~region) + 
+    scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+                         values = rescale(c(min(pd1$cors, pd2$cors), 0, max(pd1$cors, pd2$cors))),
+                         limits = c(small, big), 
+                         breaks = c(small, 0, big),
+                         labels = c(small, 0, big)) + 
+    labs(
+        x = 'Frequency (Hz)',
+        y = 'Channel',
+        fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
+    ) + 
+    scale_y_discrete(labels = rev(ch_labels)) + 
+    theme_bw() + 
+    theme(strip.background = element_rect(fill = NA),
+          panel.grid = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position = 'none',
+          axis.text.y = element_text(size = 8),
+          text = element_text(size = size),
+          strip.text.y = element_text(size = 12))
+
+
+g <- ggarrange(p1, p2, nrow = 2)
+g
+
+
+ggsave(path(root, 'figures/heatmap_by_task_include_difference.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
 
 
