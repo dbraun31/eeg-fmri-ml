@@ -91,11 +91,12 @@ p2 <- fmri %>%
         color = ''
     ) + 
     xlim(0, 30) + 
+    ylim(-45, 60) + 
     scale_color_manual(values = c('DAN' = bu, 'DMN' = rd)) + 
     theme_bw() +
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.position = c(.1, .8),
+          legend.position = c(.05, .6),
           text = element_text(size = 16))
 
 g <- ggarrange(p2, p1, nrow = 2)
