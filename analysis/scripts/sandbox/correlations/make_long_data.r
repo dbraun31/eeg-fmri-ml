@@ -25,7 +25,7 @@ ch_names <- py$ch_names
 ch_names <- c(ch_names[grepl('^F', ch_names)], ch_names[grepl('^T', ch_names)],
               ch_names[grepl('^C', ch_names)], ch_names[grepl('^P', ch_names)],
               ch_names[grepl('^O', ch_names)])
-
+saveRDS(ch_names, path(root, 'ch_names.rds'))
 # Import merged data
 d <- data.table(read_feather('data/merged_data.feather'))
 

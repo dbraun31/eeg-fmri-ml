@@ -26,16 +26,20 @@ if (file.exists(path(root, 'correlations_long.csv'))) {
     stop('correlations_long.csv is missing. First run make_flat_data.py, then run make_long_data.r')
 }
 
+ch_names <- readRDS(path(root, 'ch_names.rds'))
+
 # Adjust the lag var to (s)
 result <- result %>% 
     mutate(lag = lag * 2,
            region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
-                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa')) %>% 
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa'),
+           channel = factor(channel, levels=ch_names)) %>% 
     filter(region != "DAN - DMNa")
 result_run <- result_run %>% 
     mutate(lag = lag * 2,
            region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
-                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa')) %>% 
+                           `dmna` = 'DMNa', `dmnb` = 'DMNb', `diff` = 'DAN - DMNa'),
+           channel = factor(channel, levels=ch_names)) %>% 
     filter(region != "DAN - DMNa")
     
 # --- UNCONDITIONAL SUBJECT-LEVEL HISTOGRAMS --- #
@@ -92,7 +96,6 @@ raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_
 ch_names = raw.info['ch_names']
 ch_pos = get_channel_coordinates(ch_names)
 ")
-ch_names <- py$ch_names
 
 # Prep data
 pd1 <- result %>% 
@@ -218,8 +221,6 @@ pd %>%
 ggsave(path(root, 'figures/topo.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
 
-
-
 # --- INDIVIDUAL DIFFERENCES --- #
 
 # INDIVIDUAL HISTOGRAMS
@@ -271,6 +272,46 @@ result_run %>%
 
 ggsave(path(root, 'figures/individual_differences.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
+
+# INDIVIDUAL POINTS
+
+dan_cor <- result_run %>% 
+    filter(channel == 'P3', frequency == 10, region == 'DAN', lag == 2) %>% 
+    group_by(subject, session, run) %>% 
+    summarize(dan_cor = mean(cors)) %>% 
+    group_by(subject) %>% 
+    summarize(dan_cor = mean(dan_cor)) 
+
+es <- '#3F51B5'
+gcpt <- '#FF7043'
+
+result_run %>% 
+    filter(channel == 'P3', frequency == 10, region %in% c('DAN', 'DMNa'), lag == 2) %>% 
+    group_by(subject, session, run, region) %>% 
+    summarize(cors = mean(cors)) %>% 
+    mutate(task = ifelse(run == 'run-001', 'GradCPT', 'Experience Sampling')) %>% 
+    left_join(dan_cor) %>% 
+    ggplot(aes(x = reorder(subject, dan_cor), y = cors)) + 
+    geom_hline(yintercept = 0, linetype = 'dashed') +
+    geom_jitter(aes(color = task), width = .1, alpha = .7) + 
+    facet_wrap(~region) + 
+    coord_flip() + 
+    scale_color_manual(values = c(`GradCPT` = gcpt, `Experience Sampling` = es)) + 
+    labs(
+        x = 'Subject',
+        y = latex2exp::TeX('$\\rho_{EEG, fMRI}$'),
+        color = ''
+    ) + 
+    theme_bw() + 
+    theme(axis.ticks = element_blank(),
+          strip.background = element_rect(fill = NA),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          legend.position = 'bottom',
+          text = element_text(size = size),
+          axis.text.y = element_text(size = 10))
+
+ggsave(path(root, 'figures/individual_differences_points.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
 # --- BY TASK --- #
 
@@ -407,9 +448,6 @@ ggsave(path(root, 'figures/heatmap_with_significance.png'), height = 1080, width
 
 
 
-
-
-
 # --- BY TASK WITH DIFFERENCE REGION --- #
 
 result_run <- fread(path(root, 'correlations_long_byrun.csv'))
@@ -490,7 +528,6 @@ p2 <- pd2 %>%
 
 g <- ggarrange(p1, p2, nrow = 2)
 g
-
 
 ggsave(path(root, 'figures/heatmap_by_task_include_difference.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
