@@ -26,6 +26,9 @@ class Reformat:
         self.completed = [Path(x).stem for x in completed]
         self.overwrite = overwrite
 
+        # Hardcode fmri networks
+        self.fmri_networks = ['DAN', 'DMN', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
+
 
     def run(self):
 
@@ -47,21 +50,17 @@ class Reformat:
                 path_eeg = Path(f'analysis/data/original/{subject}/{session}/eeg')
                 path_fmri= Path(f'analysis/data/original/{subject}/{session}/func')
 
-                # GradCPT is run 1
                 files_eeg = glob(str(path_eeg / Path('*.set')))
                 files_eeg = sorted(files_eeg, key=self._sort)
-                files_dmn = glob(str(path_fmri / Path('DMN_*')))
-                files_dmn = sorted(files_dmn, key=self._sort)
-                files_dan = glob(str(path_fmri / Path('DAN_*')))
-                files_dan = sorted(files_dan, key=self._sort)
-                files_dna = glob(str(path_fmri / Path('DNa*')))
-                files_dna = sorted(files_dna, key = self._sort)
-                files_dnb = glob(str(path_fmri / Path('DNb*')))
-                files_dnb = sorted(files_dnb, key = self._sort)
-                files_fmri = [files_dan, files_dmn, files_dna, files_dnb]
 
+                files_fmri = {}
+                for network in self.fmri_networks:
+                    # Assuming network name is start of filename
+                    out = glob(str(path_fmri / Path(f'{network}_*')))
+                    files_fmri[network] = sorted(out, key=self._sort)
+                    
 
-                if not files_eeg or not files_dan or not files_dmn:
+                if not files_eeg or not all([x for x in files_fmri]):
                     mi = self._get_metainfo(files_eeg)
                     message = (f'Missing data for subject {subject} '
                                f'session {session}. Skipping session.')
@@ -70,7 +69,8 @@ class Reformat:
                     continue
                     
 
-                if not len(files_eeg) == len(files_dan) or not len(files_eeg) == len(files_dmn):
+                fmri_lens = [len(x) for x in files_fmri]
+                if not all([x[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
                     mi = self._get_metainfo(files_eeg)
                     message = ("Number of files detected for EEG not equal to "
                              "number detected for fMRI.\n" 
