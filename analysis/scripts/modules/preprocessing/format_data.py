@@ -102,7 +102,7 @@ class Reformat:
                     y = self._process_fmri(file_fmri, network_names)
 
                     # Ensure fmri data same observation count
-                    if not all([len(x) == len(list(y.values())[0]) for x in y]):
+                    if not all([len(x) == len(list(y.values())[0]) for x in y.values()]):
                         mi = self._get_metainfo(files_eeg[0])
                         message = ("Number of observations across fmri "
                                    "networks is not equal to one another.\n"
