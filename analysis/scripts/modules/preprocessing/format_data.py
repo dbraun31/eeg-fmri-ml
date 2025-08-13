@@ -59,7 +59,6 @@ class Reformat:
                     out = glob(str(path_fmri / Path(f'{network}_*')))
                     files_fmri[network] = sorted(out, key=self._sort)
                     
-
                 if not files_eeg or not all([x for x in files_fmri]):
                     mi = self._get_metainfo(files_eeg)
                     message = (f'Missing data for subject {subject} '
@@ -69,8 +68,8 @@ class Reformat:
                     continue
                     
 
-                fmri_lens = [len(x) for x in files_fmri]
-                if not all([x[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
+                fmri_lens = [len(x) for x in files_fmri.values()]
+                if not all([fmri_lens[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
                     mi = self._get_metainfo(files_eeg)
                     message = ("Number of files detected for EEG not equal to "
                              "number detected for fMRI.\n" 
@@ -82,7 +81,8 @@ class Reformat:
                     self._update_log(message, mi)
                     continue
 
-                for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, zip(*files_fmri)), start=1):
+                for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, zip(*files_fmri.values())), start=1):
+
                     # file_fmri is a tuple of each of one run files for all
                     # fmri
                     run = 'run-' + str(run).zfill(3)
@@ -95,44 +95,42 @@ class Reformat:
                     if X is None:
                         continue
 
-                    y_dan, y_dmn, y_dna, y_dnb = self._process_fmri(file_fmri)
+                    # Hard assumption that network name is first arg in
+                    # filename, separated with _
+                    network_names = [Path(x).stem.split('_')[0] for x in file_fmri]
+                    # y is dict of {network: np.array, ...}
+                    y = self._process_fmri(file_fmri, network_names)
 
                     # Ensure fmri data same observation count
-                    if not all([len(y_dan) == len(y_dmn), 
-                                len(y_dmn) == len(y_dna), 
-                                len(y_dna) == len(y_dnb)]):
+                    if not all([len(x) == len(list(y.values())[0]) for x in y]):
                         mi = self._get_metainfo(files_eeg[0])
-                        message = ("Number of observations for DMN not "
-                                   "equal to those for DAN.\n"
-                                   f"Subject: {subject}, Session: {session}, Run: {run}\n"
-                                   f"DMN: {len(y_dmn)}\n"
-                                   f"DAN: {len(y_dan)}\n"
-                                   f"DMNa: {len(y_dna)}\n"
-                                   f"DMNb: {len(y_dnb)}\n"
-                                   "Skipping run")
+                        message = ("Number of observations across fmri "
+                                   "networks is not equal to one another.\n"
+                                   f"Subject: {subject}, Session: {session}, Run: {run}\n")
+                        for network in y:
+                            message += f'{network}: {len(y[network])}\n'
+                        message += "Skipping run"
                         print(message + '\n')
                         self._update_log(message, mi)
                         continue
 
                     # Try chopping off last TR
-                    if X[:-1, :].shape[0] == len(y_dan):
+                    if X[:-1, :].shape[0] == len(y['DAN']):
                         X = X[:-1, :]
 
                     # Validate equal observations across X and y
-                    if X.shape[0] != len(y_dan) or X.shape[0] != len(y_dmn):
+                    if X.shape[0] != len(y['DMN']):
                         mi = self._get_metainfo(file_eeg)
                         message = (f"Unequal observations for {mi['subject']} "
-                                   f"{mi['session']} {mi['run']}, X: {X.shape[0]}, "
-                                   f"y_dan: {len(y_dan)}, "
-                                   f"y_dmn: {len(y_dmn)}. Skipping run.")
+                                   f"{mi['session']} {mi['run']}, X: {X.shape[0]}, ")
+                        for network in y:
+                            message += f'{network}: {len(y[network])}, '
+                        message += 'Skipping run.'
                         print(message + '\n')
                         self._update_log(message, mi)
                         continue
 
-                    d[session][run] = {'X': X, 'y': {'dan': y_dan, 
-                                                     'dmn': y_dmn,
-                                                     'dmn_a': y_dna,
-                                                     'dmn_b': y_dnb}}
+                    d[session][run] = {'X': X, 'y': y}
 
             self.subject = subject
             self._write_data(d)
@@ -156,7 +154,6 @@ class Reformat:
         pattern = r'(?:run-|bld)(\d+)_'
         m = int(re.search(pattern, run).group(1))
         return m
-
 
     def _process_eeg(self, file_eeg):
         '''
@@ -272,24 +269,23 @@ class Reformat:
 
         return {'subject': subject, 'session': session, 'run': run}
 
-
-    def _process_fmri(self, files):
+    def _process_fmri(self, files, network_names):
         '''
-        Input is [file_dan, file_dmn, file_dna, file_dnb]
-        Convert eeg file path to a (248, 31 * 40 * 9) array
+        Input is tuple of paths to each network for one run
+        Return dict of np.array, chopping off the correct lag numbers
         '''
-        out = []
+        out = {}
         num_lags = self.num_lags
 
-        for file in files:
+        for file, name in zip(files, network_names):
 
             with open(file, 'r') as f:
                 d = f.readlines()
 
-            # Chop off first 8 observations
+            # Chop off first k observations
             d = np.array([float(x.strip()) for x in d])[(num_lags-1):]
 
-            out.append(d)
+            out[name] = d
 
         return out
 
