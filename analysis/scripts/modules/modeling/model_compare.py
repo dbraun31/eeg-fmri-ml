@@ -93,16 +93,14 @@ class ModelCompare:
                  scoring=None,
                  log_dir=None,
                  groups='channels', # For future use
-                 bads=None,
+                 bads=[],
                  verbose=0): 
 
         if len(estimators) != len(param_grids):
             raise RuntimeError('Number of estimators must equal number of '
                                 'parameter grids')
 
-        # Bads from preprocessing observation misalignment
-        self.bads = [1, 11, 13, 19, 23, 25]
-
+        self.bads = bads
         self.estimators = estimators
         self.param_grids = param_grids
         self.fixed_params_dict = fixed_params_dict
