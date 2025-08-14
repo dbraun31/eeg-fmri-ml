@@ -60,17 +60,15 @@ class Reformat:
                     files_fmri[network] = sorted(out, key=self._sort)
                     
                 if not files_eeg or not all([x for x in files_fmri]):
-                    mi = self._get_metainfo(files_eeg)
                     message = (f'Missing data for subject {subject} '
                                f'session {session}. Skipping session.')
                     print(message + '\n')
-                    self._update_log(message, mi)
+                    self._update_log(message)
                     continue
                     
 
                 fmri_lens = [len(x) for x in files_fmri.values()]
                 if not all([fmri_lens[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
-                    mi = self._get_metainfo(files_eeg)
                     message = ("Number of files detected for EEG not equal to "
                              "number detected for fMRI.\n" 
                             f"Subject: {subject}, Session: {session}, Run: {run}\n"
@@ -78,7 +76,7 @@ class Reformat:
                             f"fMRI files: {files_fmri}\n"
                             "Skipping run.")
                     print(message + '\n')
-                    self._update_log(message, mi)
+                    self._update_log(message)
                     continue
 
                 for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, zip(*files_fmri.values())), start=1):
@@ -103,7 +101,6 @@ class Reformat:
 
                     # Ensure fmri data same observation count
                     if not all([len(x) == len(list(y.values())[0]) for x in y.values()]):
-                        mi = self._get_metainfo(files_eeg[0])
                         message = ("Number of observations across fmri "
                                    "networks is not equal to one another.\n"
                                    f"Subject: {subject}, Session: {session}, Run: {run}\n")
@@ -111,7 +108,7 @@ class Reformat:
                             message += f'{network}: {len(y[network])}\n'
                         message += "Skipping run"
                         print(message + '\n')
-                        self._update_log(message, mi)
+                        self._update_log(message)
                         continue
 
                     # Try chopping off last TR
@@ -120,14 +117,13 @@ class Reformat:
 
                     # Validate equal observations across X and y
                     if X.shape[0] != len(y['DMN']):
-                        mi = self._get_metainfo(file_eeg)
-                        message = (f"Unequal observations for {mi['subject']} "
-                                   f"{mi['session']} {mi['run']}, X: {X.shape[0]}, ")
+                        message = (f"Unequal observations for {subject} "
+                                   f"{session} {run}, X: {X.shape[0]}, ")
                         for network in y:
                             message += f'{network}: {len(y[network])}, '
                         message += 'Skipping run.'
                         print(message + '\n')
-                        self._update_log(message, mi)
+                        self._update_log(message)
                         continue
 
                     d[session][run] = {'X': X, 'y': y}
@@ -171,7 +167,7 @@ class Reformat:
             mi = self._get_metainfo(file_eeg)
             message = (f"Error with {mi['subject']} {mi['session']}"
                        f" {mi['run']}. Message: {exception}. Skipping run.")
-            self._update_log(message, mi)
+            self._update_log(message)
 
             return None
 
@@ -230,7 +226,7 @@ class Reformat:
 
 
 
-    def _update_log(self, message, mi):
+    def _update_log(self, message):
         # Either create or update log with message
 
         log_path = Path('analysis/scripts/modules/preprocessing/logs')
