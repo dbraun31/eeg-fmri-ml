@@ -5,3 +5,5 @@ old/
 r21/
 **/*.csv
 **/logs/
+**/*.feather
+**/*.rds

@@ -1,85 +1,146 @@
-# --- RUN THIS SCRIPT TO CONVERT DATA/MERGED_DATA.FEATHER TO SCRIPTS/SANDBOX/CORRELATIONS/CORRELATIONS_LONG*.CSV -- #
-# (run before running visualize correlations.r) #
-# (computationally intensive) #
-
 rm(list=ls())
-library(data.table)
-library(arrow)
 library(tidyverse)
-library(reticulate)
-library(fs)
+library(data.table)
+library(future.apply)
 library(here)
-setwd(path(here(), 'analysis'))
-root <- path('scripts/sandbox/correlations')
-
-# Get channel names from raw data
-use_condaenv('eeg-fmri')
-py_run_string("
-import mne
-raw = mne.io.read_raw_eeglab('data/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
-ch_names = raw.info['ch_names']
-")
-ch_names <- py$ch_names
-
-# Make channel order more logical
-ch_names <- c(ch_names[grepl('^F', ch_names)], ch_names[grepl('^T', ch_names)],
-              ch_names[grepl('^C', ch_names)], ch_names[grepl('^P', ch_names)],
-              ch_names[grepl('^O', ch_names)])
-saveRDS(ch_names, path(root, 'ch_names.rds'))
-# Import merged data
-d <- data.table(read_feather('data/merged_data.feather'))
-
-# Assumes first feature column is 'Fp1_1_0'
-voltage_cols <- colnames(d)[which(colnames(d)=='Fp1_1_0'):length(colnames(d))]
-
-d <- d[, dan_dmna_diff := dan - dmn_a]
+library(fs)
+library(arrow)
+setwd(here())
+root <- path('analysis/scripts/sandbox/correlations')
 
 
-# Big data table energy (expensive)
-# Run correlations
-cor_func <- function(ref_col, data) {
-    sapply(data, function(col) cor(ref_col, col, use = 'pairwise.complete.obs', method='spearman'))
+# Function defs
+
+extract_matrices <- function(run_df, eeg_cols, fmri_cols) {
+    eeg_mat <- as.matrix(run_df[, eeg_cols])
+    fmri_mat <- as.matrix(run_df[, fmri_cols])
+    return(list(eeg=eeg_mat, fmri=fmri_mat))
 }
+
+compute_spearman_cor <- function(eeg, fmri) {
+    # Apply column-wise rank
+    eeg_rank <- apply(eeg, 2, rank)
+    fmri_rank <- apply(fmri, 2, rank)
     
-result_run <- d[,
-                .(dmn_cors = list(cor_func(dmn, .SD)),
-                  dan_cors = list(cor_func(dan, .SD)),
-                  dmna_cors = list(cor_func(dmn_a, .SD)),
-                  dmnb_cors = list(cor_func(dmn_b, .SD)),
-                  diff_cors = list(cor_func(dan_dmna_diff, .SD))),
-                by = .(subject, session, run),
-                .SDcols = voltage_cols
-]
+    # Normalize
+    eeg_z <- scale(eeg_rank)
+    fmri_z <- scale(fmri_rank)
+    n_trs <- nrow(eeg)
+    
+    # Correlate
+    cor <- t(fmri_z) %*% eeg_z / (n_trs - 1)
+    
+    return(cor)
+    
+}
 
 
-# Unlist
-result_run <- result_run[
-    ,
-    .(feature = voltage_cols,
-      dan_cors = unlist(dan_cors),
-      dmn_cors = unlist(dmn_cors),
-      dmna_cors = unlist(dmna_cors),
-      dmnb_cors = unlist(dmnb_cors),
-      diff_cors = unlist(diff_cors)),
-    by = .(subject, session, run)
-]
 
-# Final formatting
 
-result_run <- result_run %>% 
-    separate(feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>% 
-    gather(region, cors, dmn_cors, dan_cors, dmna_cors, dmnb_cors, diff_cors) %>% 
-    mutate(region = str_replace(region, '_cors', ''),
-           lag = as.integer(lag),
-           frequency = as.integer(frequency),
-           channel = factor(channel, levels=ch_names)) 
+# Run 
 
-result <- result_run %>% 
-    group_by(subject, channel, lag, frequency, region) %>% 
-    summarize(cors = mean(cors))
+if (!file.exists(path(root, 'cors.rds'))) {
+    
+    # Import
+    d <- read_feather('analysis/data/merged_data.feather')
+    
+    # Extract modality columns
+    eeg_cols <- colnames(d)[which(colnames(d) == 'Fp1_1_0'):(ncol(d))]
+    fmri_cols <- colnames(d)[(which(colnames(d) == 'tr')+1):(which(colnames(d) == 'Fp1_1_0')-1)]
+    
+    # Split data by subject, session, run
+    d$run_id <- paste(d$subject, d$session, d$run, sep = '_')
+    d_split <- split(d, d$run_id)
+    
+    
+    # Test it out
+    run_matrices <- extract_matrices(d_split[[1]], eeg_cols, fmri_cols)
+    cor_mat <- compute_spearman_cor(run_matrices$eeg, run_matrices$fmri)
+    plan(multisession, workers=parallel::detectCores()-5)
+    
+    cors <- future_lapply(d_split, function(run_df) {
+        mats <- extract_matrices(run_df, eeg_cols, fmri_cols)
+        compute_spearman_cor(mats$eeg, mats$fmri)
+    })
+    
+    
+    saveRDS(cors, file = path(root, 'cors.rds'))
+    
+} else {
+    cors <- readRDS(path(root, 'cors.rds'))
+}
 
-write.csv(result_run, path(root, 'correlations_long_byrun.csv'), row.names=FALSE)
-write.csv(result, path(root, 'correlations_long.csv'), row.names=FALSE)
+format_cors <- function(data, label) {
+    data <- data.frame(t(data))
+    info <- str_split(label, '_')[[1]]
+    subject <- info[1]
+    session <- info[2]
+    run <- info[3]
+    
+    header <- data.frame(subject=subject, session=session, run=run, eeg_feature=rownames(data))
+    out <- cbind(header, data)
+}
+
+
+ch_names <- readRDS(path(root, 'ch_names.rds'))
+
+# Combine
+d <- do.call(rbind, lapply(seq_along(cors), function(i) format_cors(cors[[i]], names(cors[i]))))
+d <- d %>% 
+    separate(eeg_feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>%
+    mutate(frequency = as.numeric(frequency),
+           lag = as.numeric(lag),
+           channel = factor(channel, levels = ch_names))
+
+fmri_cols <- colnames(d)[(which(colnames(d) == 'lag')+1):(ncol(d))]
+
+d <- d %>% 
+    gather(region, cors, all_of(fmri_cols)) 
+
+# Save
+write_feather(d, path(root, 'correlations_long.feather'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
