@@ -20,14 +20,18 @@ N = len(subjects)
 out = {}
 for subject in subjects:
 
-    runs = glob(f'analysis/data/original/{subject}/**/*.set', recursive=True)
+    runs = glob(f'analysis/data/original/{subject}/**/DAN_*.txt', recursive=True)
 
     N_runs = len(runs)
 
     mins = 0
     for run in runs:
-        raw = mne.io.read_raw_eeglab(run)
-        mins += len(raw) / raw.info['sfreq'] / 60
+        raw = []
+        with open(run, 'r') as file:
+            for line in file:
+                raw.append(float(line.strip()))
+
+        mins += len(raw) * 2 / 60
 
     hours = math.floor(mins / 60)
     mins = round(mins % 60, 2)
@@ -51,3 +55,6 @@ for subject in subjects:
 
 
 d.to_csv(root / Path('subject_info.csv'), index=False)
+
+
+
