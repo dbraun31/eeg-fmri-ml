@@ -390,33 +390,39 @@ breaks <- c(0, 1, 4, 8, 12, 30, 40)
 labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
 bins <- unique(cut(result$frequency, breaks=breaks))
 labels <- paste(labels, bins, sep=' ')
+networks <- c('DNa', 'DNb', 'DANa', 'DANb', 'FPCNa', 'FPCNb', 'SAL')
 
 
 ps <- result %>% 
     mutate(bin = cut(frequency, breaks, labels)) %>% 
-    filter(bin != 'init (0,1]', lag <= 10) %>% 
+    filter(bin != 'init (0,1]', lag <= 10,
+           region %in% networks) %>% 
     group_by(subject, lag, region, bin) %>% 
     summarize(cors = mean(cors)) %>% 
     group_by(lag, region, bin) %>% 
     summarize(p = t.test(cors, mu = 0)$p.value) %>% 
-    mutate(p_adj = p.adjust(p, method='fdr')) %>% 
+    mutate(p_adj = p.adjust(p, method='fdr'),
+           region = factor(region, levels = networks)) %>% 
     filter(p_adj < .05) 
     
 
 pd <- result %>% 
     mutate(bin = cut(frequency, breaks, labels)) %>% 
-    filter(bin != 'init (0,1]', lag <= 10) %>% 
+    filter(bin != 'init (0,1]', lag <= 10,
+           region %in% networks) %>% 
     group_by(bin, lag, region) %>% 
-    summarize(cors = mean(cors)) 
+    summarize(cors = mean(cors)) %>% 
+    mutate(region = factor(region, levels = networks))
 
 small <- floor(min(pd$cors)*100)/100
 big <- ceiling(max(pd$cors)*100)/100
 
+# True to size
 p <- pd %>%     
     ggplot(aes(x = bin, y = lag)) + 
     geom_tile(aes(fill = cors)) + 
-    geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 5) + 
-    facet_wrap(~region) + 
+    geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 2) + 
+    facet_wrap(~region, nrow=1) + 
     scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) +
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
                          values = rescale(c(small, 0, big)),
@@ -425,7 +431,7 @@ p <- pd %>%
     labs(
         x = 'Frequency bin',
         y = 'Lag (s)',
-        fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
+        fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
     ) + 
     theme_bw() + 
     theme(strip.background = element_rect(fill = NA),
@@ -433,11 +439,43 @@ p <- pd %>%
           panel.grid = element_blank(),
           legend.position = 'bottom',
           text = element_text(size = size),
-          axis.text.x = element_text(angle = 45, hjust=1))
+          axis.text.x = element_text(angle = 45, hjust=1, size = 8))
     
-ggsave(plot = p, file = path(root, 'figures/heatmap_with_significance.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
+# Screens
+ggsave(plot = p, file = path(root, 'figures/heatmap_with_significance_screens.png'), height = 1080, width = 1920, units = 'px', dpi = 120)    
 
-                         
+# MS (true to size)
+ggsave(plot = p, file = path(root, 'figures/heatmap_with_significance_ms_true.png'), height = 6.5, width = 6.7, units = 'in', dpi = 300)    
 
 
+# Enlarged                         
+p <- pd %>%     
+    ggplot(aes(x = bin, y = lag)) + 
+    geom_tile(aes(fill = cors)) + 
+    geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 3) + 
+    facet_wrap(~region, nrow=1) + 
+    scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+                         values = rescale(c(small, 0, big)),
+                         breaks = c(small, 0, big),
+                         limits = c(small, big)) + 
+    labs(
+        x = 'Frequency bin',
+        y = 'Lag (s)',
+        fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
+    ) + 
+    theme_bw() + 
+    theme(strip.background = element_rect(fill = NA),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = 'bottom',
+          text = element_text(size = 25),
+          axis.text.x = element_text(angle = 45, hjust=1, size = 14),
+          legend.text = element_text(size = 16, angle = 45, hjust=1),
+          legend.title = element_text(margin = margin(r = 30)))
+    
+
+
+# MS (enlarged)
+ggsave(plot = p, file = path(root, 'figures/heatmap_with_significance_ms_large.png'), height = 6.5, width = 20, units = 'in', dpi = 300)    
 
