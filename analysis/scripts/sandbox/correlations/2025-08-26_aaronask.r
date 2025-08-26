@@ -132,7 +132,7 @@ p2 <- pd2 %>%
           axis.text = element_blank(),
           axis.title = element_blank(),
           strip.background = element_rect(fill = NA),
-          legend.position = 'bottom',
+          legend.position = 'none',
           text = element_text(size=size),
           axis.ticks = element_blank())
 
