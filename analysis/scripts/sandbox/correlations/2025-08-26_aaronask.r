@@ -1,8 +1,8 @@
 # --- DATA AND LIBRARIES --- #
 rm(list=ls())
 library(arrow)
-library(ggridges)
 library(tidyverse)
+library(psych)
 library(eegUtils)
 library(data.table)
 library(ggpubr)
@@ -60,9 +60,29 @@ pd1 <- result %>%
     group_by(lag, frequency, region) %>% 
     summarize(cors = mean(cors)) 
 
-# Find range of cors
-big <- ceiling(max(pd1$cors) * 100) / 100
-small <- floor(min(pd1$cors) * 100) / 100
+
+# --- PLOT TOPOS --- #
+
+# Get frequency bands
+breaks <- c(0, 1, 4, 8, 12, 30, 40)
+labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+bins <- unique(cut(result$frequency, breaks=breaks))
+labels <- paste(labels, bins, sep=' ')
+
+pd2 <- result %>% 
+    mutate(band = cut(frequency, breaks, labels)) %>% 
+    filter(band != 'init (0,1]') %>% 
+    inner_join(py$ch_pos) %>% 
+    group_by(subject, x, y, band, region) %>% 
+    summarize(cors = mean(cors), channel = unique(channel)) %>% 
+    group_by(x, y, band, region) %>% 
+    summarize(cors = mean(cors), channel = unique(channel)) %>% 
+    mutate(z = 50, 
+           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+                           `DNa` = 'DNa', `DNb` = 'DNb'))
+
+small <- floor(min(pd1$cors, pd2$cors)*100)/100
+big <- ceiling(max(pd1$cors, pd2$cors)*100)/100
 
 # Plot
 p1 <- pd1 %>% 
@@ -71,7 +91,8 @@ p1 <- pd1 %>%
     geom_tile(aes(fill = cors)) + 
     facet_wrap(~region) +
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
-                         values = rescale(c(min(pd1$cors), 0, max(pd1$cors))),
+                         values = rescale(c(min(pd1$cors, pd2$cors), 0, 
+                                            max(pd1$cors, pd2$cors))),
                          limits = c(small, big),
                          breaks = c(small, 0, big),
                          labels = c(small, 0, big)) + 
@@ -89,36 +110,14 @@ p1 <- pd1 %>%
           legend.position = 'bottom',
           text = element_text(size=size))
 
-# --- PLOT TOPOS --- #
 
-# Get frequency bands
-breaks <- c(0, 1, 4, 8, 12, 30, 40)
-labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
-bins <- unique(cut(result$frequency, breaks=breaks))
-labels <- paste(labels, bins, sep=' ')
-
-pd <- result %>% 
-    mutate(band = cut(frequency, breaks, labels)) %>% 
-    filter(band != 'init (0,1]') %>% 
-    inner_join(py$ch_pos) %>% 
-    group_by(subject, x, y, band, region) %>% 
-    summarize(cors = mean(cors), channel = unique(channel)) %>% 
-    group_by(x, y, band, region) %>% 
-    summarize(cors = mean(cors), channel = unique(channel)) %>% 
-    mutate(z = 50, 
-           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
-                           `DNa` = 'DNa', `DNb` = 'DNb'))
-
-small <- floor(min(pd$cors)*100)/100
-big <- ceiling(max(pd$cors)*100)/100
-
-p2 <- pd %>% 
+p2 <- pd2 %>% 
     filter(band == 'Alpha (8,12]',
            region %in% c('DNa', 'DNb', 'DAN')) %>%
     mutate(region = factor(region, levels = c('DNa', 'DNb', 'DAN'))) %>%
     ggplot(aes(x = x, y = y, z = z)) + 
     geom_topo(chan_markers = 'text', aes(fill = cors, label = channel)) +
-    facet_grid(region~band) + 
+    facet_wrap(~region) + 
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
                          values = rescale(c(small, 0, big)),
                          breaks = c(small, 0, big),
@@ -137,5 +136,76 @@ p2 <- pd %>%
           text = element_text(size=size),
           axis.ticks = element_blank())
 
-ggsave(plot=p1, file=path(root, '/figures/2025-08-26/temp_out.png'), 
+g <- ggarrange(p1, p2, nrow=2)
+
+ggsave(plot=g, file=path(root, '/figures/2025-08-26/heatmap_topo.png'), 
+       height = 6, width = 10, units = 'in', dpi = 300)
+
+
+
+# --- ASK 2 --- #
+# Compute ICC for just DNa across sessions for subjects (lag x freq)
+get_icc <- function(s1, s2) {
+    d <- data.frame(s1, s2)
+    i <- ICC(d)$results
+    out <- i[i$type=='ICC3',]$ICC
+    return(out)
+}
+
+pd <- result_run %>%
+    filter(region == 'DNa', subject != 'sub-023') %>%
+    group_by(subject, session, frequency, lag) %>%
+    summarize(cors = mean(cors, na.rm=TRUE)) %>%
+    mutate(session = str_replace(session, '-', '')) %>%
+    spread(session, cors) %>%
+    group_by(frequency, lag) %>%
+    summarize(icc = get_icc(ses001, ses002)) 
+
+p1 <- pd %>%
+    ggplot(aes(x = frequency, y = lag)) +
+    geom_tile(aes(fill = icc)) + 
+    labs(
+         x = 'Frequency (Hz)',
+         y = 'Lag (s)',
+         main = 'Intraclass Correlation Coefficient',
+         fill = 'ICC') + 
+    theme_bw() + 
+    theme(legend.position = 'bottom',
+          axis.ticks = element_blank(),
+          panel.grid = element_blank())
+
+pd2 <- result %>%
+    filter(region == 'DNa') %>%
+    group_by(subject, frequency, lag) %>%
+    summarize(cors = mean(cors)) %>%
+    group_by(frequency, lag) %>%
+    summarize(cors = mean(cors)) 
+
+small <- round(min(pd2$cors), 3)
+big <- round(max(pd2$cors), 3)
+
+p2 <- pd2 %>%
+    ggplot(aes(x = frequency, y = lag)) +
+    geom_tile(aes(fill = cors)) + 
+    labs(
+         x = 'Frequency (Hz)',
+         y = 'Lag (s)',
+         main = 'Mean Correlations',
+         fill = latex2exp::TeX('$\\rho_{~~EEG,fMRI}$')) + 
+    scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+                         values = rescale(c(min(pd2$cors), 0, 
+                                            max(pd2$cors))),
+                         limits = c(small, big),
+                         breaks = c(small, 0, big),
+                         labels = c(small, 0, big)) + 
+    theme_bw() + 
+    theme(legend.position = 'bottom',
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          legend.text = element_text(angle = 45, hjust=1))
+    
+
+g <- ggarrange(p1, p2, nrow = 1)
+
+ggsave(plot=g, file=path(root, '/figures/2025-08-26/icc_spearman.png'), 
        height = 6, width = 10, units = 'in', dpi = 300)
