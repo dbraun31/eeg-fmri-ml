@@ -27,7 +27,7 @@ class Reformat:
         self.overwrite = overwrite
 
         # Hardcode fmri networks
-        self.fmri_networks = ['DAN', 'DMN', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
+        self.fmri_networks = ['DAN', 'DANa', 'DANb', 'DMN', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
 
 
     def run(self):
