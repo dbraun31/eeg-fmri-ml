@@ -186,6 +186,8 @@ class ModelCompare:
             y = np.concatenate([self.data['ses-001'][x]['y']['dmn_a'] for x in runs])
             cv_splits = get_cv_splits(self.data['ses-001'])
 
+            #  --- Add logic for Bayesian optimization here --- #
+             
             # Grid search
             print('-' * 20)
             print(f'\nInitiating grid search for {estimator_name}.\n')

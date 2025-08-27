@@ -17,7 +17,7 @@ def get_cv_splits(session):
     # Concatenate data
     runs = list(session.keys())
     X = np.concatenate([session[x]['X'] for x in runs])
-    y = np.concatenate([session[x]['y']['dmn_a'] for x in runs])
+    y = np.concatenate([session[x]['y']['DNa'] for x in runs])
 
     # Get all run indices
     run_idxs = {}
@@ -51,7 +51,8 @@ class GridSearchCV(BaseEstimator):
         # (y_test, y_preds)
         if scoring is None:
             self.scoring = mean_squared_error
-        self.scoring = scoring
+        else:
+            self.scoring = scoring
         self.verbose = verbose
         self.results_ = {
                 'params': [],
