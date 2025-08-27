@@ -61,7 +61,7 @@ pd1 <- result %>%
     summarize(cors = mean(cors)) 
 
 
-# --- PLOT TOPOS --- #
+# --- PLOT HEAT AND TOPOS --- #
 
 # Get frequency bands
 breaks <- c(0, 1, 4, 8, 12, 30, 40)
@@ -145,6 +145,7 @@ ggsave(plot=g, file=path(root, '/figures/2025-08-26/heatmap_topo.png'),
 
 # --- ASK 2 --- #
 # Compute ICC for just DNa across sessions for subjects (lag x freq)
+text <- 16
 get_icc <- function(s1, s2) {
     d <- data.frame(s1, s2)
     i <- ICC(d)$results
@@ -153,13 +154,15 @@ get_icc <- function(s1, s2) {
 }
 
 pd <- result_run %>%
-    filter(region == 'DNa', subject != 'sub-023') %>%
+    filter(region == 'DNa', subject != 'sub-023', lag <= 10) %>%
     group_by(subject, session, frequency, lag) %>%
     summarize(cors = mean(cors, na.rm=TRUE)) %>%
     mutate(session = str_replace(session, '-', '')) %>%
     spread(session, cors) %>%
     group_by(frequency, lag) %>%
     summarize(icc = get_icc(ses001, ses002)) 
+
+pal <- paletteer::paletteer_c('ggthemes::Green', n = 100)
 
 p1 <- pd %>%
     ggplot(aes(x = frequency, y = lag)) +
@@ -169,22 +172,29 @@ p1 <- pd %>%
          y = 'Lag (s)',
          main = 'Intraclass Correlation Coefficient',
          fill = 'ICC') + 
+    scale_fill_gradientn(colors = pal) + 
     theme_bw() + 
     theme(legend.position = 'bottom',
           axis.ticks = element_blank(),
-          panel.grid = element_blank())
+          panel.grid = element_blank(),
+          legend.title = element_text(margin = margin(r = 10)),
+          text = element_text(size = text))
 
-pd2 <- result %>%
-    filter(region == 'DNa') %>%
-    group_by(subject, frequency, lag) %>%
+print(glue::glue('Mean ICC: {round(mean(pd$icc), 2)}, SD = {round(sd(pd$icc), 2)}'))
+
+pd2 <- result_run %>%
+    filter(region == 'DNa', lag <= 10) %>%
+    group_by(subject, session, frequency, lag) %>%
     summarize(cors = mean(cors)) %>%
-    group_by(frequency, lag) %>%
+    group_by(session, frequency, lag) %>%
     summarize(cors = mean(cors)) 
 
-small <- round(min(pd2$cors), 3)
-big <- round(max(pd2$cors), 3)
+small <- floor(min(pd2$cors) * 100) / 100
+big <- ceiling(max(pd2$cors) * 100) / 100
+
 
 p2 <- pd2 %>%
+    mutate(session = recode(session, `ses-001` = 'Session 1', `ses-002` = 'Session 2')) %>% 
     ggplot(aes(x = frequency, y = lag)) +
     geom_tile(aes(fill = cors)) + 
     labs(
@@ -198,14 +208,17 @@ p2 <- pd2 %>%
                          limits = c(small, big),
                          breaks = c(small, 0, big),
                          labels = c(small, 0, big)) + 
+    facet_wrap(~session) + 
     theme_bw() + 
     theme(legend.position = 'bottom',
           axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          legend.text = element_text(angle = 45, hjust=1))
+          legend.text = element_text(angle = 45, hjust=1),
+          strip.background = element_rect(fill = NA),
+          text = element_text(size = text))
     
 
-g <- ggarrange(p1, p2, nrow = 1)
+g <- ggarrange(p2, p1, nrow = 1)
 
 ggsave(plot=g, file=path(root, '/figures/2025-08-26/icc_spearman.png'), 
-       height = 6, width = 10, units = 'in', dpi = 300)
+       height = 6, width = 15, units = 'in', dpi = 300)
