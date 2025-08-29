@@ -89,6 +89,15 @@ class BayesCV:
             y_loss = self._cross_val(x_hyper)
 
         X_final = self._fit_gp(X_hyper, y_loss)
+        self.best_estimator_ = self.estimator(**X_final, **self.fixed_params)
+        self.best_params_ = dict(zip(param_names, X_final))
+        self.fitted_estimator_ = self.best_estimator_.fit(X, y)
+
+    def predict(self, X):
+
+        out = self.fitted_estimator_.predict(X)
+        return out
+        
 
 
     def _cross_val(self, x_hyper):
@@ -165,13 +174,6 @@ class BayesCV:
                 return X_hyper[np.where(y_loss == np.min(y_loss))[0][0], :]
             elif optimum_type == 'theoretical':
                 return X_domain[np.where(mu == np.min(mu))[0][0], :]
-
-
-
-
-
-
-
 
 
     def _get_domain(self, limit, steps=100):
