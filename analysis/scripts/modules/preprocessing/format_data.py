@@ -153,7 +153,7 @@ class Reformat:
 
     def _process_eeg(self, file_eeg):
         '''
-        Convert eeg file path to a (248, 31 * 40 * 9) array
+        Convert eeg file path to a (N timepoints, 31 * 40 * 9) array
         Needs to update to epoch 2 s back from TR marker
         num_lags includes lag 0
         '''
@@ -177,17 +177,14 @@ class Reformat:
         njobs = int(os.cpu_count() - 1)
         sfreq = raw.info['sfreq']
 
-        tf_full = tfr_array_morlet(
+        power = tfr_array_morlet(
                 raw.get_data()[np.newaxis, :, :],
                 sfreq=sfreq,
                 freqs = freqs,
                 n_cycles=7,
                 n_jobs=njobs,
-                output='complex')[0]
+                output='power')[0]
 
-
-        # Convert to power
-        power = np.abs(tf_full.data) ** 2
         # Normalize within frequency band
         rel_power = power / power.sum(axis=2, keepdims=True)
 
