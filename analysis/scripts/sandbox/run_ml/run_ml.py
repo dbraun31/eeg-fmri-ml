@@ -1,4 +1,4 @@
-from sklearn.linear_model import ElasticNetCV
+from sklearn.linear_model import ElasticNet
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
@@ -42,6 +42,27 @@ loss_baseline = rmse(y_pred, y_test)
 
 # Elastic net
 enet = ElasticNetCV()
+enet.fit(X_train, y_train)
+y_pred = enet.predict(X_test)
+loss_enet = rmse(y_pred, y_test)
+
+def objective(trial):
+    alpha = trial.suggest_float('alpha', .001, 10, log=True)
+    l1_ratio = trial.suggest_float('l1_ratio', .1, .9)
+
+    pipe = Pipeline([
+        ('scaler', StandardScaler()),
+        ('enet', ElasticNet(alpha=alpha, l1_ratio=l1_ratio))])
+
+    scores = cross_val_score(pipe, X_train, y_train, cv=cv, 
+                             scoring='neg_root_mean_squared_error')
+
+    return -scores.mean()
+
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=50, n_jobs=os.cpu_count()-1)
+
+enet = ElasticNet(**study.best_params)
 enet.fit(X_train, y_train)
 y_pred = enet.predict(X_test)
 loss_enet = rmse(y_pred, y_test)
