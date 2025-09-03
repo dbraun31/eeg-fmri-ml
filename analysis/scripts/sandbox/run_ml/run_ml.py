@@ -1,79 +1,82 @@
-import numpy as np
-import pandas as pd
-from pathlib import Path
-import pickle
-from glob import glob
+from sklearn.linear_model import ElasticNetCV
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
 import os
-from groupyr import SGL
+import numpy as np
+from glob import glob
+import pickle
 from pyprojroot import here
+from pathlib import Path
 os.chdir(here() / Path('analysis'))
-from scripts.modules.modeling.bayes_opt import BayesCV
-from scripts.modules.preprocessing.cv_prep import get_cv_splits
-from sklearn.metrics import mean_squared_error as mse
-root = Path('scripts/sandbox/run_ml')
+from scripts.modules.modeling.model_selection import train_test_split, get_cv_splits
+import optuna
 
 
-dpath = Path('data/formatted')
-subjects = glob(str(dpath / Path('*')))
-subjects = [Path(x).stem for x in subjects ]
-subjects = sorted(subjects, key=lambda x: int(x.split('-')[1]))
-bads = ['sub-023']
-subjects = [x for x in subjects if x not in bads]
+# Test subject
+subjects = glob('data/formatted/*')
+subjects = sorted([Path(x).stem for x in subjects], key=lambda x: int(x.split('-')[1]))
 
-out = pd.DataFrame()
+subject = subjects[1]
+dpath = Path(f'data/formatted/{subject}.pkl')
 
-for subject in subjects:
-    print(f'Subject {subject} of {subjects[-1]}')
-
-    dpath = Path(f'data/formatted/{subject}.pkl')
-    with open(dpath, 'rb') as file:
-        d = pickle.load(file)
+with open(dpath, 'rb') as file:
+    d = pickle.load(file)
 
 
-    splits = get_cv_splits(d['ses-001'])
-
-    train_runs = list(d['ses-001'].keys())
-    test_runs = list(d['ses-002'].keys())
-
-# Train test split
-    X_train = np.concatenate([d['ses-001'][x]['X'] for x in train_runs], axis=0)
-    y_train = np.concatenate([d['ses-001'][x]['y']['DNa'] for x in train_runs], axis=0)
-    X_test = np.concatenate([d['ses-002'][x]['X'] for x in test_runs], axis=0)
-    y_test = np.concatenate([d['ses-002'][x]['y']['DNa'] for x in test_runs], axis=0)
-
-    param_grid = {'l1_ratio': [.2, .8],
-                  'alpha': np.logspace(-4, 1, 3)}
-
-    limits = {'l1_ratio': {'min': 0, 'max': 1, 'space': 'linear'},
-              'alpha': {'min': 1e-4, 'max': 10, 'space': 'log'}}
-
-    bcv = BayesCV(estimator=SGL,
-                  param_grid=param_grid,
-                  cv_splits=splits,
-                  limits=limits,
-                  verbose=True)
+# Partition data
+X_train, y_train, X_test, y_test = train_test_split(d)
+splits = get_cv_splits(d['ses-001'])
+logo = LeaveOneGroupOut()
+cv = list(logo.split(X_train, y_train, groups=splits))
 
 
-    bcv.fit(X_train, y_train)
-    nonzero_coef = bcv.nonzero_coef_
-    y_pred = bcv.predict(X_test)
-    ses2_loss = mse(y_test, y_pred)
-
-    model = bcv.best_estimator_
-    model.fit(X_test, y_test)
-    y_pred = model.predict(X_train)
-    ses1_loss = mse(y_train, y_pred)
-
-    sgl_score = np.mean([ses1_loss, ses2_loss])
-    baseline_score = np.mean([mse(np.full(len(y_test), np.mean(y_train)), y_test),
-                              mse(np.full(len(y_train), np.mean(y_test)), y_train)])
+# Loss
+def rmse(y_pred, y_test):
+    return np.sqrt(sum((y_pred - y_test)**2))
 
 
-    row = pd.DataFrame(np.column_stack([subject, nonzero_coef,
-                                        baseline_score, sgl_score]))
-    out = pd.concat([out, row], axis=0)
+# Baseline
+y_pred = np.full(y_test.shape[0], y_train.mean())
+loss_baseline = rmse(y_pred, y_test)
+
+# Elastic net
+enet = ElasticNetCV()
+enet.fit(X_train, y_train)
+y_pred = enet.predict(X_test)
+loss_enet = rmse(y_pred, y_test)
 
 
-out.columns = ['subject', 'nonzero_coef', 'baseline', 'sgl']
-out.to_csv(root / Path('sgl_subjects.csv'), index=False)
+# Random forest
 
+def objective(trial):
+    n_components = trial.suggest_int('n_components', 50, 500)
+    n_estimators = trial.suggest_int('n_estimators', 100, 300, step=50)
+    max_depth = trial.suggest_int('max_depth', 5, 60)
+    max_features_frac = trial.suggest_float('max_features_frac', 0.05, 1.0)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 10)
+    bootstrap = trial.suggest_categorical('bootstrap', [True, False])
+
+    rf = RandomForestRegressor(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features_frac,
+            min_samples_leaf=min_samples_leaf,
+            bootstrap=bootstrap,
+            random_state=42,
+            n_jobs=-1
+        )
+
+    scores = cross_val_score(rf, X_train, y_train, cv=cv, groups=splits,
+                             scoring='neg_root_mean_squared_error')
+
+    return -scores.mean()
+
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=80)
+
+
+
+
+
+print(f'Baseline: {loss_baseline}\nENet: {loss_enet}')

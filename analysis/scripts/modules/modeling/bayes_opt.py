@@ -99,6 +99,7 @@ class BayesCV:
 
     def __init__(self, estimator, param_grid, limits, cv_splits,
                  fixed_params=None,
+                 k=2,
                  scoring=None,
                  log_path=None,
                  verbose=0):
@@ -112,6 +113,7 @@ class BayesCV:
         # Order of key definition needs to be same as param_grid!
         self.limits = limits
         self.cv_splits = cv_splits
+        self.k = k
         self.fixed_params = fixed_params or {}
         if scoring is None:
             self.scoring = mean_squared_error
@@ -196,9 +198,10 @@ class BayesCV:
         return mean_loss
 
 
-    def _fit_gp(self, X_hyper, y_loss, k=.01, max_iter=5,
+    def _fit_gp(self, X_hyper, y_loss, max_iter=10,
                 optimum_type='empirical'):
 
+        k = self.k
         # Init GP
         kernel = ConstantKernel(1) * RBF(1) + WhiteKernel(1)
         gp = GaussianProcessRegressor(

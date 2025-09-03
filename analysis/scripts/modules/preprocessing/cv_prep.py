@@ -1,7 +1,9 @@
 import numpy as np
 
-def get_cv_splits(session):
+def get_cv_splits_ar(session):
     '''
+    ** this is for my custom set of CV functions**
+
      Takes in session data {'run1': {'X': ..., 'y': ...}, ...}
      Returns cv_splits
        [(train_idx1, test_idx1), (train_idx2, test_idx2), ...]
@@ -27,4 +29,20 @@ def get_cv_splits(session):
         cv_splits.append((train_idx, test_idx))
 
     return cv_splits
+
+
+def get_cv_splits(session):
+    '''
+    *** this is for sklearn functions ***
+    '''
+    out = []
+
+    for i, run in enumerate(session.keys(), start=1):
+
+        X = session[run]['X']
+        out += list(np.full(X.shape[0], i))
+
+    return out
+
+
 
