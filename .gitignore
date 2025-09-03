@@ -7,3 +7,8 @@ r21/
 **/logs/
 **/*.feather
 **/*.rds
+push.sh
+pull.sh
+**/*.set
+**/*.fdt
+**/*.xlsx
