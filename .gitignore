@@ -9,3 +9,5 @@ r21/
 **/*.rds
 push.sh
 pull.sh
+**/*.set
+**/*.fdt
