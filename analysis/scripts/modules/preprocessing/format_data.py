@@ -173,7 +173,8 @@ class Reformat:
 
 
         # Obtain time-frequency data
-        freqs = np.array(range(1, 41))
+        freqs = np.logspace(0, np.log10(40), 40)
+        n_cycles = freqs / 2
         njobs = int(os.cpu_count() - 1)
         sfreq = raw.info['sfreq']
 
@@ -181,7 +182,7 @@ class Reformat:
                 raw.get_data()[np.newaxis, :, :],
                 sfreq=sfreq,
                 freqs = freqs,
-                n_cycles=7,
+                n_cycles=n_cycles,
                 n_jobs=njobs,
                 output='power')[0]
 
