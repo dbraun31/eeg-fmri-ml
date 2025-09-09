@@ -6,12 +6,12 @@ from glob import glob
 from pathlib import Path
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import get_scorer, make_scorer
+from sklearn.metrics._scorer import _BaseScorer
 from sklearn.base import BaseEstimator
-from scripts.modules.modeling.grid_search import (
-        get_cv_splits,
-        GridSearchCV,
-        get_final_score
-)
+from sklearn.model_selection import GridSearchCV
+from scripts.modules.modeling.model_selection import get_cv_splits, train_test_split
 
 
 
@@ -92,7 +92,7 @@ class ModelCompare:
                  data_path=None,
                  scoring=None,
                  log_dir=None,
-                 groups='channels', # For future use
+                 apply_scaler=False,
                  bads=[],
                  verbose=0): 
 
@@ -104,11 +104,11 @@ class ModelCompare:
         self.estimators = estimators
         self.param_grids = param_grids
         self.fixed_params_dict = fixed_params_dict
-        self.scoring = scoring or (lambda x, y: np.sqrt(np.mean((x - y)**2)))
         self.subject = None
         if subject is not None:
             self.subject = self._parse_subject(subject)
         self.subjects = None
+        self.apply_scaler = apply_scaler
         self.data_path = Path(data_path or 'data/formatted')
         self.verbose = verbose
         self.best_model_ = None
@@ -122,6 +122,14 @@ class ModelCompare:
         self.log_dir_pkl = log_dir / Path('pkl')
         self.log_dir_pkl.mkdir(parents=True, exist_ok=True)
 
+        # Make scorer
+        self.scoring = scoring or 'neg_root_mean_squared_error'
+        if type(self.scoring) is str:
+            self.scoring = make_scorer(self.scoring)
+        elif not isinstance(self.scoring, _BaseScorer):
+            raise ValueError('scorer must be an sklearn compatible string'
+            'or scorer')
+        
         # Process one subject or all subjects
         if self.subject is not None:
             self.data = self._import_data(self.data_path, self.subject)
@@ -174,16 +182,19 @@ class ModelCompare:
         for estimator_name in self.estimators:
 
             # Get estimator and params
-            estimator = self.estimators[estimator_name]
             param_grid = self.param_grids[estimator_name]
             fixed_params = None
             if type(self.fixed_params_dict) is dict:
                 fixed_params = self.fixed_params_dict.get(estimator_name, None)
+            if fixed_params is None:
+                estimator = self.estimators[estimator_name]()
+            else:
+                estimator = self.estimators[estimator_name](**fixed_params)
 
             # Format data
             runs = list(self.data['ses-001'].keys())
             X = np.concatenate([self.data['ses-001'][x]['X'] for x in runs])
-            y = np.concatenate([self.data['ses-001'][x]['y']['dmn_a'] for x in runs])
+            y = np.concatenate([self.data['ses-001'][x]['y']['DNa'] for x in runs])
             cv_splits = get_cv_splits(self.data['ses-001'])
 
             #  --- Add logic for Bayesian optimization here --- #
@@ -191,24 +202,29 @@ class ModelCompare:
             # Grid search
             print('-' * 20)
             print(f'\nInitiating grid search for {estimator_name}.\n')
-            cv = GridSearchCV(estimator=estimator,
-                              param_grid=param_grid,
-                              cv_splits=cv_splits,
-                              fixed_params=fixed_params, 
-                              scoring=self.scoring,
-                              verbose=self.verbose)
-            cv.fit(X, y)
-            # Combine params
-            params = cv.best_params_
-            if fixed_params is not None:
-                params = cv.best_params_ | fixed_params
-            score =  get_final_score(estimator, params, self.data, self.scoring)
+
+            pipe = Pipeline([
+                ('scaler', StandardScaler()),
+                (estimator_name, estimator)])
+            
+            model_param_grid = {f'{estimator_name}__{k}': v for k, v in param_grid.items()}
+
+
+            grid = GridSearchCV(estimator=pipe,
+                                    param_grid=model_param_grid,
+                                    cv = cv_splits,
+                                    scoring = 'neg_mean_squared_error') 
+            grid.fit(X, y)
+
+            estimator = grid.best_estimator_
+            score =  get_final_score(estimator, self.data, self.scoring)
             scores.append((estimator_name, score))
 
             self._write_log(estimator_name, cv, score)
 
         # Sort and return
-        scores.sort(key=lambda x: x[1])
+        reverse = self.scorer._sign > 0
+        scores.sort(key=lambda x: x[1], reverse=reverse)
         self.best_model_ = scores[0]
 
         return scores
@@ -222,6 +238,7 @@ class ModelCompare:
 
         subject = 'sub-' + str(int(subject_match.group())).zfill(3)
         return subject
+
 
     def _import_data(self, data_path, subject):
 
@@ -276,4 +293,28 @@ class ModelCompare:
         summary.append('=' * 20)
 
         writer(summary)
+
+
+
+def get_final_score(estimator, data, scoring):
+    # Get averaged session score
+
+    scores = []
+
+    sessions = list(data.keys())
+
+    for train_session in sessions:
+        # Get data
+        test_session = [s for s in sessions if s != train_session][0]
+        runs_train = list(data[train_session].keys())
+        runs_test = list(data[test_session].keys())
+        X_train, y_train, X_test, y_test = train_test_split(data, train_session=train_session)
+
+        estimator.fit(X_train, y_train) 
+        y_pred = estimator.predict(X_test)
+        score = scoring(estimator, X_test, y_test) * scoring._sign
+        scores.append(score)
+
+    return np.mean(scores)
+
 

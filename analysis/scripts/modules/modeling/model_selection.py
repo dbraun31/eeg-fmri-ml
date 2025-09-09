@@ -1,21 +1,21 @@
 import numpy as np
 
 
-def train_test_split(d, session='ses-001', network='DNa'):
+def train_test_split(d, train_session='ses-001', network='DNa'):
     '''
     Given data d, return X_train, y_train, X_test, y_test
     session controls whether data is from ses 1 or 2
     '''
 
-    session_test = 'ses-002' if session == 'ses-001' else 'ses-001'
-    train_runs = list(d[session].keys())
-    test_runs = list(d[session_test].keys())
+    test_session = 'ses-002' if train_session == 'ses-001' else 'ses-001'
+    train_runs = list(d[train_session].keys())
+    test_runs = list(d[test_session].keys())
 
     # Train test split
-    X_train = np.concatenate([drop_lags(d[session][x]['X']) for x in train_runs], axis=0)
-    y_train = np.concatenate([d[session][x]['y'][network] for x in train_runs], axis=0)
-    X_test = np.concatenate([drop_lags(d[session][x]['X']) for x in test_runs], axis=0)
-    y_test = np.concatenate([d[session][x]['y'][network] for x in test_runs], axis=0)
+    X_train = np.concatenate([drop_lags(d[train_session][x]['X']) for x in train_runs], axis=0)
+    y_train = np.concatenate([d[train_session][x]['y'][network] for x in train_runs], axis=0)
+    X_test = np.concatenate([drop_lags(d[test_session][x]['X']) for x in test_runs], axis=0)
+    y_test = np.concatenate([d[test_session][x]['y'][network] for x in test_runs], axis=0)
 
     return X_train, y_train, X_test, y_test
 
@@ -35,17 +35,30 @@ def drop_lags(X, seconds_back=10):
 
 def get_cv_splits(session):
     '''
-    *** this is for sklearn functions ***
+     Takes in session data {'run1': {'X': ..., 'y': ...}, ...}
+     Returns cv_splits
+       [(train_idx1, test_idx1), (train_idx2, test_idx2), ...]
     '''
-    out = []
 
-    for i, run in enumerate(session.keys(), start=1):
+    # Concatenate data
+    runs = list(session.keys())
+    X = np.concatenate([session[x]['X'] for x in runs])
+    y = np.concatenate([session[x]['y']['DNa'] for x in runs])
 
-        X = session[run]['X']
-        out += list(np.full(X.shape[0], i))
+    # Get all run indices
+    run_idxs = {}
+    start = 0
+    for run in runs:
+        stop = session[run]['X'].shape[0] 
+        run_idxs[run] = np.array(range(start, start+stop))
+        start += stop
 
-    return out
+    cv_splits = []
+    for run in runs:
+        test_idx = run_idxs[run]
+        train_idx = np.setdiff1d(np.arange(X.shape[0]), test_idx)
+        cv_splits.append((train_idx, test_idx))
 
-
+    return cv_splits
 
 

@@ -140,7 +140,7 @@ class GridSearchCV(BaseEstimator):
 
 
 
-def get_final_score(estimator, params, data, scoring):
+def get_final_score(estimator, data, scoring):
     # Get averaged session score
 
     scores = []
@@ -156,15 +156,9 @@ def get_final_score(estimator, params, data, scoring):
         y_train = np.concatenate([data[train_session][x]['y']['dmn_a'] for x in runs_train])
         X_test = np.concatenate([data[test_session][x]['X'] for x in runs_test])
         y_test = np.concatenate([data[test_session][x]['y']['dmn_a'] for x in runs_test])
-        # Scale
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
 
-        # Fit predict score
-        model = estimator(**params)
-        model.fit(X_train, y_train) # Issue is here
-        y_pred = model.predict(X_test)
+        estimator.fit(X_train, y_train) 
+        y_pred = estimator.predict(X_test)
         score = scoring(y_test, y_pred)
         scores.append(score)
 

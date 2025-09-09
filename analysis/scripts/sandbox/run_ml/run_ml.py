@@ -1,122 +1,97 @@
-from sklearn.linear_model import ElasticNet
+import mne
+import os
+from pyprojroot import here
+from pathlib import Path
+import pickle
+import numpy as np
+import pandas as pd
+from glob import glob
+from sklearn.linear_model import Ridge
+from sklearn.metrics import make_scorer, get_scorer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
-import os
-import numpy as np
-from glob import glob
-import pickle
-from pyprojroot import here
-from pathlib import Path
 os.chdir(here() / Path('analysis'))
-from scripts.modules.modeling.model_selection import train_test_split, get_cv_splits
-import optuna
+from scripts.modules.modeling.model_selection import train_test_split
+from scripts.modules.modeling.model_compare import ModelCompare, get_final_score
+from scripts.modules.modeling.baseline import BaselineModel
+from sklearn.model_selection import GridSearchCV
+from scripts.modules.preprocessing.cv_prep import get_cv_splits_ar
 
 
-# Test subject
-subjects = glob('data/formatted/*')
-subjects = sorted([Path(x).stem for x in subjects], key=lambda x: int(x.split('-')[1]))
+root = Path('scripts/sandbox/run_ml')
+droot = Path('data/formatted')
 
-subject = subjects[1]
-dpath = Path(f'data/formatted/{subject}.pkl')
+subjects = [Path(x).stem for x in glob(str(droot / Path('*')))]
+subjects = sorted(subjects, key=lambda x: int(x.split('-')[1]))
 
-with open(dpath, 'rb') as file:
-    d = pickle.load(file)
+result = pd.DataFrame()
+
+for subject in subjects:
+    print(f'\n---PROCESSING SUBJECT {subject} of {subjects[-1]}---\n')
+
+    subject = subjects[12]
+    dpath = droot / Path(f'{subject}.pkl')
+
+    with open(dpath, 'rb') as file:
+        d = pickle.load(file)
+
+    X_train, y_train, X_test, y_test = train_test_split(d)
+
+    estimators = {'ridge': Ridge, 'rf': RandomForestRegressor}
+    param_grids = {'ridge': {'alpha': np.logspace(np.log10(.1), np.log10(10), 7)},
+                   'rf': {'max_samples_leaf': [5, 10, 15]}}
+    fixed_params_dict = {'rf': {'n_estimators': 100}}
 
 
-# Partition data
-X_train, y_train, X_test, y_test = train_test_split(d)
-splits = get_cv_splits(d['ses-001'])
-logo = LeaveOneGroupOut()
-cv = list(logo.split(X_train, y_train, groups=splits))
+
+    def rmse(y_test, y_pred):
+        return np.sqrt(sum((y_pred - y_test)**2))
+
+    scoring = make_scorer(rmse, greater_is_better=False)
+
+# --- BASELINE --- #
+    bm = BaselineModel()
+    bm.fit(X_train, y_train)
+    y_pred = bm.predict(X_test)
+    loss_baseline = get_final_score(bm, d, scoring)
 
 
-# Loss
-def rmse(y_pred, y_test):
-    return np.sqrt(sum((y_pred - y_test)**2))
+# --- RIDGE --- #
 
-
-# Baseline
-y_pred = np.full(y_test.shape[0], y_train.mean())
-loss_baseline = rmse(y_pred, y_test)
-
-# Elastic net
-
-def objective(trial):
-    alpha = trial.suggest_float('alpha', .001, 10, log=True)
-    l1_ratio = trial.suggest_float('l1_ratio', .1, .9)
-
-    pipe = Pipeline([
-        ('scaler', StandardScaler()),
-        ('enet', ElasticNet(alpha=alpha, l1_ratio=l1_ratio))])
-
-    scores = cross_val_score(pipe, X_train, y_train, cv=cv, 
-                             scoring='neg_root_mean_squared_error')
-
-    return -scores.mean()
-
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=50, n_jobs=os.cpu_count()-1)
-
-enet = ElasticNet(**study.best_params)
-enet.fit(X_train, y_train)
-print(f'Nonzero coefs: {sum(enet.coef_ != 0)}')
-y_pred = enet.predict(X_test)
-loss_enet = rmse(y_pred, y_test)
-
-def objective(trial):
-    alpha = trial.suggest_float('alpha', .001, 10, log=True)
-    l1_ratio = trial.suggest_float('l1_ratio', .1, .9)
+    cv_splits = get_cv_splits_ar(d['ses-001'])
 
     pipe = Pipeline([
         ('scaler', StandardScaler()),
-        ('enet', ElasticNet(alpha=alpha, l1_ratio=l1_ratio))])
-
-    scores = cross_val_score(pipe, X_train, y_train, cv=cv, 
-                             scoring='neg_root_mean_squared_error')
-
-    return -scores.mean()
-
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=50, n_jobs=os.cpu_count()-1)
-
-enet = ElasticNet(**study.best_params)
-enet.fit(X_train, y_train)
-y_pred = enet.predict(X_test)
-loss_enet = rmse(y_pred, y_test)
+         ('ridge', Ridge())])
 
 
-# Random forest
+    param_grid = {'ridge__alpha': np.logspace(np.log10(.1), np.log10(10), 7)}
 
-def objective(trial):
-    n_components = trial.suggest_int('n_components', 50, 500)
-    n_estimators = trial.suggest_int('n_estimators', 100, 300, step=50)
-    max_depth = trial.suggest_int('max_depth', 5, 60)
-    max_features_frac = trial.suggest_float('max_features_frac', 0.05, 1.0)
-    min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 10)
-    bootstrap = trial.suggest_categorical('bootstrap', [True, False])
+    grid = GridSearchCV(estimator=pipe,
+                        param_grid=param_grid,
+                        cv=cv_splits,
+                        scoring = 'neg_root_mean_squared_error')
 
-    rf = RandomForestRegressor(
-            n_estimators=n_estimators,
-            max_depth=max_depth,
-            max_features=max_features_frac,
-            min_samples_leaf=min_samples_leaf,
-            bootstrap=bootstrap,
-            random_state=42,
-            n_jobs=-1
-        )
-
-    scores = cross_val_score(rf, X_train, y_train, cv=cv, groups=splits,
-                             scoring='neg_root_mean_squared_error')
-
-    return -scores.mean()
-
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=80)
+    grid.fit(X_train, y_train)
+    loss_ridge = get_final_score(grid.best_estimator_, d, scoring)
 
 
+# --- RANDOM FOREST --- #
+
+    rf =  RandomForestRegressor(
+            max_depth=5,
+            min_samples_leaf=8,
+            n_estimators=100,
+            bootstrap=True,
+            n_jobs=-1)
+
+    loss_rf = get_final_score(rf, d, scoring)
+
+    obs = np.column_stack([subject, loss_baseline, loss_ridge, loss_rf])
+    result = pd.concat([result, pd.DataFrame(obs)], axis=0)
 
 
+result.columns = ['subject', 'baseline', 'ridge', 'random_forest']
 
-print(f'Baseline: {loss_baseline}\nENet: {loss_enet}')
+result.to_csv(root / Path('within_subject.csv'), index=False)
