@@ -4,6 +4,7 @@ from pyprojroot import here
 from pathlib import Path
 import pickle
 import numpy as np
+np.int = int
 import pandas as pd
 from glob import glob
 from xgboost import XGBRegressor
@@ -28,6 +29,7 @@ droot = Path('data/formatted')
 
 subjects = [Path(x).stem for x in glob(str(droot / Path('*')))]
 subjects = sorted(subjects, key=lambda x: int(x.split('-')[1]))
+subjects = [x for x in subjects if x != 'sub-023']
 
 result = pd.DataFrame()
 
@@ -108,10 +110,8 @@ for subject in subjects:
 # --- XGBoost --- #
     model = XGBRegressor(
             tree_method='gpu_hist',
+            max_bin=64,
             gpu_id=0)
-
-    model.fit(X_train, y_train)
-    loss_xgb = get_final_score(model, d, scoring)
 
 
 
@@ -124,12 +124,15 @@ for subject in subjects:
 	}
 
     param_grid = {
-		'n_estimators': [100, 300],            # number of trees
-		'max_depth': [3, 5, 7],                # tree depth
-		'learning_rate': [0.01, 0.1],          # shrinkage
-		'subsample': [0.8, 1.0],               # row sampling
-		'colsample_bytree': [0.8, 1.0],        # column sampling
-		'min_child_weight': [1, 5]             # minimum sum of instance weight per child
+		"n_estimators": [100, 300, 500, 1000],        # more trees for stability
+		"max_depth": [2, 3, 5, 7, 9],                 # shallow to moderately deep
+		"learning_rate": [0.001, 0.01, 0.05, 0.1],    # smaller rates + more trees
+		"subsample": [0.5, 0.7, 0.8, 1.0],            # more aggressive row sampling
+		"colsample_bytree": [0.3, 0.5, 0.7, 0.9, 1.0],# column sampling (important for collinear features!)
+		"min_child_weight": [1, 5, 10],               # larger = more conservative splits
+		"gamma": [0, 0.1, 0.5, 1.0],                  # min loss reduction for split
+		"reg_alpha": [0, 0.01, 0.1, 1.0],             # L1 regularization (feature selection)
+		"reg_lambda": [0.1, 1.0, 10.0]                # L2 regularization (shrinkage)
 	}
 
 
@@ -145,6 +148,8 @@ for subject in subjects:
                           cv=cv_splits,
                           scoring='neg_root_mean_squared_error',
                           n_jobs=-1)
+
+    grid.fit(X_train, y_train)
 
     bayes.fit(X_train, y_train)
 
