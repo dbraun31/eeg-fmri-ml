@@ -14,9 +14,7 @@ pre_cw <- read.csv('data/pre_cw_timeseries.csv')
 pre_cw$dtype <- 'pre_cw'
 post_cw <- read.csv('data/post_cw_timeseries.csv')
 post_cw$dtype <- 'post_cw'
-clean <- read.csv('data/clean_timeseries.csv')
-clean$dtype <- 'clean'
-d <- rbind(pre_cw, post_cw, clean)
+d <- rbind(pre_cw, post_cw)
 
 d <- d %>% 
     group_by(dtype) %>% 
@@ -35,15 +33,15 @@ axis_text <- 10
 # --- GET CHANNEL WITH HIGHEST MEAN ALPHA --- #
 
 # Visualize channels
-n_chans <- length(unique(d$channel))
-d %>% 
-    dplyr::filter(dtype == 'clean', sample %in% 10000:(10000 + (250))) %>% 
-    ggplot(aes(x = sample, y = voltage)) + 
-    geom_line() + 
-    facet_wrap(~channel, nrow = n_chans)
+# n_chans <- length(unique(d$channel))
+# d %>% 
+#     dplyr::filter(dtype == 'clean', sample %in% 10000:(10000 + (250))) %>% 
+#     ggplot(aes(x = sample, y = voltage)) + 
+#     geom_line() + 
+#     facet_wrap(~channel, nrow = n_chans)
 
 best_channel <- d %>% 
-    dplyr::filter(dtype == 'clean') %>% 
+    dplyr::filter(dtype == 'post_cw') %>% 
     group_by(channel) %>% 
     group_modify(~ {
         wt <- analyze.wavelet(
@@ -69,29 +67,52 @@ best_channel <- d %>%
 
 # --- FIND PEAK 10 S ALPHA IN BEST CHANNEL --- #
 
-x <- d[d$dtype=='clean' & d$channel==best_channel,]
+x <- d[d$dtype=='post_cw' & d$channel==best_channel,]
 wt <- analyze.wavelet(
     my.data = x,
     my.series = 'voltage',
     loess.span = 0,
     dt = 1/250,
     dj = 1/20,
-    lowerPeriod = 1/12,
-    upperPeriod = 1/8,
+    lowerPeriod = 1/40,
+    upperPeriod = 1/1,
     make.pval = FALSE
 )
 
-alpha <- colMeans(wt$Power)
-pow <- data.frame(sample = 1:length(alpha), alpha = alpha)
+tf <- data.frame(t(wt$Power))
+colnames(tf) <- 1 / wt$Period
+tf <- tf %>% 
+    mutate(sample = 1:n()) %>% 
+    gather(frequency, power, -sample) %>% 
+    mutate(frequency = as.numeric(frequency))
 
-ma <- rollmedian(alpha, window_size * fs, fill = NA)
+
+# Bin frequencies
+breaks <- c(0, 1, 4, 8, 12, 30, 40)
+labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+bins <- unique(cut(1:40, breaks=breaks))
+labels <- paste(labels, bins, sep=' ')
+
+alpha <- tf %>% 
+    mutate(bin = cut(frequency, breaks, labels)) %>% 
+    mutate(is_alpha = ifelse(bin == 'Alpha (8,12]', 'alpha', 'non_alpha')) %>% 
+    group_by(sample, is_alpha) %>% 
+    summarize(power = sum(power)) %>% 
+    spread(is_alpha, power) %>% 
+    mutate(alpha_adv = alpha / (alpha + non_alpha)) %>% 
+    select(sample, alpha_adv) 
+
+
+ma <- rollmedian(alpha$alpha_adv, window_size * fs, fill = NA)
 ma <- data.frame(sample = 1:(length(ma)), alpha = ma)
 best_sample <- ma %>% 
-    dplyr::filter(sample >= 10000 & sample <= 150000) %>% 
+    dplyr::filter(sample >= 10000, sample < 100000) %>% 
+    #dplyr::filter(sample >= 10000 & sample <= 150000) %>% 
     dplyr::filter(alpha == max(alpha)) %>% 
+    print() %>% 
     pull(sample)
     
-best_sample <- median(best_sample)
+best_sample <- round(median(best_sample))
 
 
 start <- best_sample - (window_size/2 * fs)
@@ -99,7 +120,6 @@ t_win <- start:(start + window_size*fs)
 
 # --- COMPUTE TIME FREQUENCY --- #
 
-# Find strong alpha
 x <- d[d$dtype=='post_cw' & d$channel == best_channel,]$voltage
 post_cw_waves <- analyze.wavelet(
     my.data = data.frame(signal=x),
@@ -126,19 +146,6 @@ pre_cw_waves <- analyze.wavelet(
 )
 pre_cw_mat <- pre_cw_waves$Power
 
-x <- d[d$dtype=='clean' & d$channel == best_channel,]$voltage
-clean_waves <- analyze.wavelet(
-    my.data = data.frame(signal=x),
-    my.series = 'signal',
-    loess.span = 0,
-    dt = 1/fs,
-    dj = 1/20,
-    lowerPeriod = 1/40,
-    upperPeriod = 1/1,
-    make.pval = FALSE
-)
-clean_mat <- clean_waves$Power
-
 # format
 post_cw_df <- data.frame(t(post_cw_mat))
 colnames(post_cw_df) <- as.character(post_cw_waves$Period)
@@ -146,11 +153,8 @@ post_cw_df$dtype <- 'post_cw'
 pre_cw_df <- data.frame(t(pre_cw_mat))
 colnames(pre_cw_df) <- as.character(pre_cw_waves$Period)
 pre_cw_df$dtype <- 'pre_cw'
-clean_df <- data.frame(t(clean_mat))
-colnames(clean_df) <- as.character(clean_waves$Period)
-clean_df$dtype <- 'clean'
 
-waves <- rbind(post_cw_df, pre_cw_df, clean_df)
+waves <- rbind(post_cw_df, pre_cw_df)
 waves <- waves %>% 
     group_by(dtype) %>% 
     mutate(sample = 1:n()) %>% 
@@ -172,7 +176,7 @@ p1 <- d %>%
     labs(
         x = 'Time (s)',
         y = 'EEG potential (V)',
-        title = 'Before CW regression'
+        title = 'Before CW regression (after MR gradient correction)'
     ) + 
     ylim(-8e-05, 7e-5) + 
     theme_bw() + 
@@ -181,7 +185,7 @@ p1 <- d %>%
           text = element_text(size = 16),
           axis.text = element_text(size = axis_text))
         
-max_p <- ceiling(max(waves[waves$sample %in% t_win,]$power))
+max_p <- ceiling(max(waves[waves$sample %in% t_win & waves$dtype=='post_cw',]$power))
 p2 <- waves %>% 
     dplyr::filter(dtype=='pre_cw', sample %in% t_win) %>% 
     mutate(time = sample / fs) %>% 
@@ -231,45 +235,8 @@ p4 <- waves %>%
     labs(
         x = 'Time (s)',
         y = 'Frequency (Hz)',
-        fill = 'Power'
-    ) + 
-    theme_bw() + 
-    theme(axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          text = element_text(size = 16),
-          axis.text = element_text(size = axis_text),
-          legend.position = 'none')
-
-p5 <- d %>% 
-    dplyr::filter(dtype == 'clean', channel == 'O2', sample %in% t_win) %>% 
-    mutate(time = sample / fs) %>% 
-    mutate(time = time - min(time)) %>% 
-    ggplot(aes(x = time, y = voltage)) + 
-    geom_line() + 
-    labs(
-        x = 'Time (s)',
-        y = 'EEG potential (V)',
-        title = 'After full preprocessing'
-    ) + 
-    ylim(-8e-05, 7e-5) + 
-    theme_bw() + 
-    theme(axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          text = element_text(size = 16),
-          axis.text = element_text(size = axis_text))
-
-p6 <- waves %>% 
-    dplyr::filter(dtype=='clean', sample %in% t_win) %>% 
-    mutate(time = sample / fs) %>% 
-    mutate(time = time - min(time)) %>% 
-    ggplot(aes(x = time, y = frequency, fill = power)) + 
-    geom_raster(interpolate=TRUE) + 
-    scale_y_log10() + 
-    scale_fill_viridis_c(option = 'plasma', limits = c(0, max_p), breaks = seq(0, max_p, length.out=2)) + 
-    labs(
-        x = 'Time (s)',
-        y = 'Frequency (Hz)',
-        fill = 'Power'
+        fill = 'Power',
+        caption = glue::glue('Max power: {max_p}')
     ) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
@@ -279,13 +246,70 @@ p6 <- waves %>%
           legend.position = 'none')
 
 g <- ggarrange(ggarrange(p1, p2, nrow = 2), ggarrange(p3, p4, nrow = 2), 
-               ggarrange(p5, p6, nrow = 2), nrow = 3, labels = c('A.', 'B.', 'C.'))
+                nrow = 2, labels = c('A.', 'B.'))
 
 ggsave(filename='r01_figure.png', plot = g, height = 14, width = 10, units = 'in', dpi = 300)
 
+# --- BY FREQ BAND --- #
+
+# Bin frequencies
+breaks <- c(0, 1, 4, 8, 12, 30, 40)
+labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+bins <- unique(cut(1:40, breaks=breaks))
+labels <- paste(labels, bins, sep=' ')
 
 
+p2a <- waves %>% 
+    dplyr::filter(dtype=='pre_cw', sample %in% t_win) %>% 
+    mutate(time = sample / fs, bin = cut(frequency, breaks, labels)) %>% 
+    mutate(time = time - min(time),
+           bin = factor(bin, levels = c('Delta (1,4]', 'Theta (4,8]', 'Alpha (8,12]', 'Beta (12,30]', 'Gamma (30,40]'))) %>% 
+    group_by(bin, time) %>% 
+    summarize(power = mean(power)) %>% 
+    ggplot(aes(x = time, y = bin, fill = power)) + 
+    geom_raster(interpolate=FALSE) + 
+    #scale_y_log10() + 
+    scale_fill_viridis_c(option = 'plasma', limits = c(0, max_p), breaks = seq(0, max_p, length.out=2)) + 
+    labs(
+        x = 'Time (s)',
+        y = 'Frequency band (Hz)',
+        fill = 'Power'
+    ) + 
+    theme_bw() + 
+    theme(axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          text = element_text(size = 16),
+          axis.text = element_text(size = axis_text),
+          legend.position = 'none')
 
+p4a <- waves %>% 
+    dplyr::filter(dtype=='post_cw', sample %in% t_win) %>% 
+    mutate(time = sample / fs, bin = cut(frequency, breaks, labels)) %>% 
+    mutate(time = time - min(time),
+           bin = factor(bin, levels = c('Delta (1,4]', 'Theta (4,8]', 'Alpha (8,12]', 'Beta (12,30]', 'Gamma (30,40]'))) %>% 
+    group_by(bin, time) %>% 
+    summarize(power = mean(power)) %>% 
+    ggplot(aes(x = time, y = bin, fill = power)) + 
+    geom_raster(interpolate=FALSE) + 
+    #scale_y_log10() + 
+    scale_fill_viridis_c(option = 'plasma', limits = c(0, max_p), breaks = seq(0, max_p, length.out=2)) + 
+    labs(
+        x = 'Time (s)',
+        y = 'Frequency band (Hz)',
+        fill = 'Power'
+    ) + 
+    theme_bw() + 
+    theme(axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          text = element_text(size = 16),
+          axis.text = element_text(size = axis_text),
+          legend.position = 'none')
+
+
+g <- ggarrange(ggarrange(p1, p2a, nrow = 2), ggarrange(p3, p4a, nrow = 2), 
+                nrow = 2, labels = c('A.', 'B.'))
+
+ggsave(filename='r01_figure_a.png', plot = g, height = 14, width = 10, units = 'in', dpi = 300)
 
 
 

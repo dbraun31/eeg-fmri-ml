@@ -6,15 +6,14 @@ import os
 from pathlib import Path
 
 root = Path('analysis/scripts/sandbox/figures_general/cwreg_overview')
-os.chdir(root)
+os.chdir(here() / root)
 
 # Originally sub 2 ses 1
 subject = 'sub-003'
 session = 'ses-001'
 
 dpaths = {'pre_cw': Path(f'data/{subject}_{session}_task-ExperienceSampling_run-002_eeg_Bergen.set'),
-         'post_cw': Path(f'data/{subject}_{session}_task-ExperienceSampling_run-002_eeg_Bergen_CWreg.set'),
-          'clean': Path(f'data/{subject}_{session}_task-ExperienceSampling_run-002_eeg_Bergen_CWreg_cleaned_ICA_rej.set')}
+         'post_cw': Path(f'data/{subject}_{session}_task-ExperienceSampling_run-002_eeg_Bergen_CWreg.set')}
 
 raw = mne.io.read_raw_eeglab(dpaths['pre_cw'])
 channels = ['Oz', 'O1', 'O2']
