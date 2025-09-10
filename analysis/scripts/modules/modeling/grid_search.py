@@ -7,34 +7,6 @@ from sklearn.metrics import mean_squared_error
 import os
 from pathlib import Path
 
-def get_cv_splits(session):
-    '''
-     Takes in session data {'run1': {'X': ..., 'y': ...}, ...}
-     Returns cv_splits
-       [(train_idx1, test_idx1), (train_idx2, test_idx2), ...]
-    '''
-
-    # Concatenate data
-    runs = list(session.keys())
-    X = np.concatenate([session[x]['X'] for x in runs])
-    y = np.concatenate([session[x]['y']['dmn_a'] for x in runs])
-
-    # Get all run indices
-    run_idxs = {}
-    start = 0
-    for run in runs:
-        stop = session[run]['X'].shape[0] 
-        run_idxs[run] = np.array(range(start, start+stop))
-        start += stop
-
-    cv_splits = []
-    for run in runs:
-        test_idx = run_idxs[run]
-        train_idx = np.setdiff1d(np.arange(X.shape[0]), test_idx)
-        cv_splits.append((train_idx, test_idx))
-
-    return cv_splits
-
 
 class GridSearchCV(BaseEstimator):
 
@@ -51,7 +23,8 @@ class GridSearchCV(BaseEstimator):
         # (y_test, y_preds)
         if scoring is None:
             self.scoring = mean_squared_error
-        self.scoring = scoring
+        else:
+            self.scoring = scoring
         self.verbose = verbose
         self.results_ = {
                 'params': [],
@@ -167,7 +140,7 @@ class GridSearchCV(BaseEstimator):
 
 
 
-def get_final_score(estimator, params, data, scoring):
+def get_final_score(estimator, data, scoring):
     # Get averaged session score
 
     scores = []
@@ -183,15 +156,9 @@ def get_final_score(estimator, params, data, scoring):
         y_train = np.concatenate([data[train_session][x]['y']['dmn_a'] for x in runs_train])
         X_test = np.concatenate([data[test_session][x]['X'] for x in runs_test])
         y_test = np.concatenate([data[test_session][x]['y']['dmn_a'] for x in runs_test])
-        # Scale
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
 
-        # Fit predict score
-        model = estimator(**params)
-        model.fit(X_train, y_train) # Issue is here
-        y_pred = model.predict(X_test)
+        estimator.fit(X_train, y_train) 
+        y_pred = estimator.predict(X_test)
         score = scoring(y_test, y_pred)
         scores.append(score)
 
