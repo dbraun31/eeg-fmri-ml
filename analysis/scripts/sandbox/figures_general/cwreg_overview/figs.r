@@ -26,7 +26,7 @@ d <- d %>%
 qu <- read.csv('data/eeg_quality_formatted.csv')
 
 
-window_size <- 10
+window_size <- 3
 fs <- 250
 axis_text <- 10
 
@@ -106,7 +106,7 @@ alpha <- tf %>%
 ma <- rollmedian(alpha$alpha_adv, window_size * fs, fill = NA)
 ma <- data.frame(sample = 1:(length(ma)), alpha = ma)
 best_sample <- ma %>% 
-    dplyr::filter(sample >= 10000, sample < 100000) %>% 
+    dplyr::filter(sample >= 10000, sample < 150000) %>% 
     #dplyr::filter(sample >= 10000 & sample <= 150000) %>% 
     dplyr::filter(alpha == max(alpha)) %>% 
     print() %>% 
@@ -166,9 +166,12 @@ waves <- waves %>%
 
 
 # --- FIGURE: INTERLEAVED TIME DOMAIN - TIME-FREQ DOMAIN ---  #
+voltage_range <- range(d[d$dtype=='pre_cw' & d$channel == best_channel & d$sample %in% t_win,]$voltage)
+voltage_min <- voltage_range[1]
+voltage_max <- voltage_range[2]
 
 p1 <- d %>% 
-    dplyr::filter(dtype == 'pre_cw', channel == 'O2', sample %in% t_win) %>% 
+    dplyr::filter(dtype == 'pre_cw', channel == best_channel, sample %in% t_win) %>% 
     mutate(time = sample / fs) %>% 
     mutate(time = time - min(time)) %>% 
     ggplot(aes(x = time, y = voltage)) + 
@@ -178,7 +181,7 @@ p1 <- d %>%
         y = 'EEG potential (V)',
         title = 'Before CW regression (after MR gradient correction)'
     ) + 
-    ylim(-8e-05, 7e-5) + 
+    ylim(voltage_min, voltage_max) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
@@ -207,7 +210,7 @@ p2 <- waves %>%
           legend.position = 'none')
 
 p3 <- d %>% 
-    dplyr::filter(dtype == 'post_cw', channel == 'O2', sample %in% t_win) %>% 
+    dplyr::filter(dtype == 'post_cw', channel == best_channel, sample %in% t_win) %>% 
     mutate(time = sample / fs) %>% 
     mutate(time = time - min(time)) %>% 
     ggplot(aes(x = time, y = voltage)) + 
@@ -217,7 +220,7 @@ p3 <- d %>%
         y = 'EEG potential (V)',
         title = 'After CW regression'
     ) + 
-    ylim(-8e-05, 7e-5) + 
+    ylim(voltage_min, voltage_max) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
@@ -245,10 +248,10 @@ p4 <- waves %>%
           axis.text = element_text(size = axis_text),
           legend.position = 'none')
 
-g <- ggarrange(ggarrange(p1, p2, nrow = 2), ggarrange(p3, p4, nrow = 2), 
+g1 <- ggarrange(ggarrange(p1, p2, nrow = 2), ggarrange(p3, p4, nrow = 2), 
                 nrow = 2, labels = c('A.', 'B.'))
 
-ggsave(filename='r01_figure.png', plot = g, height = 14, width = 10, units = 'in', dpi = 300)
+ggsave(filename=glue::glue('r01_figure_window{window_size}.png'), plot = g1, height = 14, width = 10, units = 'in', dpi = 300)
 
 # --- BY FREQ BAND --- #
 
@@ -306,41 +309,14 @@ p4a <- waves %>%
           legend.position = 'none')
 
 
-g <- ggarrange(ggarrange(p1, p2a, nrow = 2), ggarrange(p3, p4a, nrow = 2), 
+g2 <- ggarrange(ggarrange(p1, p2a, nrow = 2), ggarrange(p3, p4a, nrow = 2), 
                 nrow = 2, labels = c('A.', 'B.'))
 
-ggsave(filename='r01_figure_a.png', plot = g, height = 14, width = 10, units = 'in', dpi = 300)
+ggsave(filename=glue::glue('r01_figure_a_window{window_size}.png'), 
+       plot = g2, height = 14, width = 10, units = 'in', dpi = 300)
 
 
 
-
-# temp - zoom in
-
-seq_log <- exp(seq(log(1), log(40), length.out = 10))
-
-waves %>% 
-    dplyr::filter(dtype=='clean', sample %in% t_win) %>% 
-    mutate(time = sample / fs) %>% 
-    mutate(time = time - min(time)) %>% 
-    dplyr::filter(time <= 5) %>% 
-    ggplot(aes(x = time, y = frequency, fill = power)) + 
-    geom_raster(interpolate=TRUE) + 
-    scale_y_log10(breaks = seq_log) + 
-    scale_fill_viridis_c(option = 'plasma', limits = c(0, 250), breaks = seq(0, 250, length.out=2)) + 
-    labs(
-        x = 'Time (s)',
-        y = 'Frequency (Hz)',
-        fill = 'Power'
-    ) + 
-    theme_bw() + 
-    theme(axis.ticks = element_blank(),
-          panel.grid = element_blank(),
-          text = element_text(size = 16),
-          axis.text = element_text(size = axis_text),
-          legend.position = 'none')
-
-
-ggsave('zoom.png', height = 1080, width = 1920, units = 'px', dpi = 200)
 
 
 
