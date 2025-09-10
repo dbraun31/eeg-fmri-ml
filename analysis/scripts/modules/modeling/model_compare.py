@@ -311,8 +311,8 @@ def get_final_score(estimator, data, scoring):
         X_train, y_train, X_test, y_test = train_test_split(data, train_session=train_session)
 
         estimator.fit(X_train, y_train) 
-        y_pred = estimator.predict(X_test)
-        score = scoring(estimator, X_test, y_test) * scoring._sign
+        y_pred = estimator.predict(X_test).reshape(-1,)
+        score = scoring._score_func(y_test, y_pred)
         scores.append(score)
 
     return np.mean(scores)
