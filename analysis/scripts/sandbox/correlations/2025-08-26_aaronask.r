@@ -28,7 +28,7 @@ result_run <- result %>%
     mutate(lag = lag * 2)
 
 result <- result_run %>% 
-    group_by(subject, channel, frequency, lag, region) %>% 
+    group_by(subject, channel, frequency, lag, network) %>% 
     summarize(cors = mean(cors))
 
 
@@ -54,10 +54,10 @@ ch_pos = get_channel_coordinates(ch_names)
 
 # Prep data
 pd1 <- result %>% 
-    filter(region %in% c('DNa', 'DNb', 'DAN')) %>%
-    group_by(subject, lag, frequency, region) %>% 
+    filter(network %in% c('DNa', 'DNb', 'DAN')) %>%
+    group_by(subject, lag, frequency, network) %>% 
     summarize(cors = mean(cors)) %>% 
-    group_by(lag, frequency, region) %>% 
+    group_by(lag, frequency, network) %>% 
     summarize(cors = mean(cors)) 
 
 
@@ -73,12 +73,12 @@ pd2 <- result %>%
     mutate(band = cut(frequency, breaks, labels)) %>% 
     filter(band != 'init (0,1]') %>% 
     inner_join(py$ch_pos) %>% 
-    group_by(subject, x, y, band, region) %>% 
+    group_by(subject, x, y, band, network) %>% 
     summarize(cors = mean(cors), channel = unique(channel)) %>% 
-    group_by(x, y, band, region) %>% 
+    group_by(x, y, band, network) %>% 
     summarize(cors = mean(cors), channel = unique(channel)) %>% 
     mutate(z = 50, 
-           region = recode(region, `dan` = 'DAN', `dmn` = 'DMN',
+           network = recode(network, `dan` = 'DAN', `dmn` = 'DMN',
                            `DNa` = 'DNa', `DNb` = 'DNb'))
 
 small <- floor(min(pd1$cors, pd2$cors)*100)/100
@@ -86,10 +86,10 @@ big <- ceiling(max(pd1$cors, pd2$cors)*100)/100
 
 # Plot
 p1 <- pd1 %>% 
-    mutate(region = factor(region, levels = c('DNa', 'DNb', 'DAN'))) %>%
+    mutate(network = factor(network, levels = c('DNa', 'DNb', 'DAN'))) %>%
     ggplot(aes(x = frequency, y = lag)) +
     geom_tile(aes(fill = cors)) + 
-    facet_wrap(~region) +
+    facet_wrap(~network) +
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
                          values = rescale(c(min(pd1$cors, pd2$cors), 0, 
                                             max(pd1$cors, pd2$cors))),
@@ -113,11 +113,11 @@ p1 <- pd1 %>%
 
 p2 <- pd2 %>% 
     filter(band == 'Alpha (8,12]',
-           region %in% c('DNa', 'DNb', 'DAN')) %>%
-    mutate(region = factor(region, levels = c('DNa', 'DNb', 'DAN'))) %>%
+           network %in% c('DNa', 'DNb', 'DAN')) %>%
+    mutate(network = factor(network, levels = c('DNa', 'DNb', 'DAN'))) %>%
     ggplot(aes(x = x, y = y, z = z)) + 
     geom_topo(chan_markers = 'text', aes(fill = cors, label = channel)) +
-    facet_wrap(~region) + 
+    facet_wrap(~network) + 
     scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
                          values = rescale(c(small, 0, big)),
                          breaks = c(small, 0, big),
@@ -154,7 +154,7 @@ get_icc <- function(s1, s2) {
 }
 
 pd <- result_run %>%
-    filter(region == 'DNa', subject != 'sub-023', lag <= 10) %>%
+    filter(network == 'DNa', subject != 'sub-023', lag <= 10) %>%
     group_by(subject, session, frequency, lag) %>%
     summarize(cors = mean(cors, na.rm=TRUE)) %>%
     mutate(session = str_replace(session, '-', '')) %>%
@@ -183,7 +183,7 @@ p1 <- pd %>%
 print(glue::glue('Mean ICC: {round(mean(pd$icc), 2)}, SD = {round(sd(pd$icc), 2)}'))
 
 pd2 <- result_run %>%
-    filter(region == 'DNa', lag <= 10) %>%
+    filter(network == 'DNa', lag <= 10) %>%
     group_by(subject, session, frequency, lag) %>%
     summarize(cors = mean(cors)) %>%
     group_by(session, frequency, lag) %>%

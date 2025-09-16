@@ -35,8 +35,6 @@ compute_spearman_cor <- function(eeg, fmri) {
 }
 
 
-
-
 # Run 
 
 if (!file.exists(path(root, 'cors.rds'))) {
@@ -95,48 +93,12 @@ d <- d %>%
 fmri_cols <- colnames(d)[(which(colnames(d) == 'lag')+1):(ncol(d))]
 
 d <- d %>% 
-    gather(region, cors, all_of(fmri_cols)) 
+    gather(network, cors, all_of(fmri_cols)) %>% 
+    mutate(network = recode(network, `FPCNa` = 'FPNa', `FPCNb` = 'FPNb',
+                            `DAN` = 'dATN', `DANa` = 'dATN-A', `DANb` = 'dATN-B'))
 
 # Save
 write_feather(d, path(root, 'correlations_long.feather'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
