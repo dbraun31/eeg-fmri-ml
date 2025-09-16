@@ -26,9 +26,10 @@ d <- d %>%
 qu <- read.csv('data/eeg_quality_formatted.csv')
 
 
-window_size <- 3
+window_size <- 1
 fs <- 250
-axis_text <- 10
+axis_text <- 14
+text <- 16
 
 # --- GET CHANNEL WITH HIGHEST MEAN ALPHA --- #
 
@@ -179,13 +180,13 @@ p1 <- d %>%
     labs(
         x = 'Time (s)',
         y = 'EEG potential (V)',
-        title = 'Before CW regression (after MR gradient correction)'
+        title = 'Before CWL regression (after MR gradient correction)'
     ) + 
     ylim(voltage_min, voltage_max) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          text = element_text(size = 16),
+          text = element_text(size = text),
           axis.text = element_text(size = axis_text))
         
 max_p <- ceiling(max(waves[waves$sample %in% t_win & waves$dtype=='post_cw',]$power))
@@ -205,7 +206,7 @@ p2 <- waves %>%
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          text = element_text(size = 16),
+          text = element_text(size = text),
           axis.text = element_text(size = axis_text),
           legend.position = 'none')
 
@@ -218,13 +219,13 @@ p3 <- d %>%
     labs(
         x = 'Time (s)',
         y = 'EEG potential (V)',
-        title = 'After CW regression'
+        title = 'After CWL regression'
     ) + 
     ylim(voltage_min, voltage_max) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          text = element_text(size = 16),
+          text = element_text(size = text),
           axis.text = element_text(size = axis_text))
 
 p4 <- waves %>% 
@@ -244,7 +245,7 @@ p4 <- waves %>%
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
-          text = element_text(size = 16),
+          text = element_text(size = text),
           axis.text = element_text(size = axis_text),
           legend.position = 'none')
 
@@ -332,7 +333,7 @@ ggsave(filename=glue::glue('r01_figure_a_window{window_size}.png'),
 
 # --- HISTOGRAMS --- #
 
-p2 <- qu %>% 
+p5 <- qu %>% 
     gather(metric, value, good_chans:brain_ica) %>% 
     group_by(subject, session, metric) %>% 
     summarize(value = mean(value)) %>% 
@@ -354,3 +355,10 @@ p2 <- qu %>%
           text = element_text(size = 16),
           axis.text = element_text(size = axis_text))
     
+
+g3 <- ggarrange(ggarrange(p1, p2, nrow=2), ggarrange(p3, p4, nrow=2), p5, nrow=3,
+                labels = c('A.', 'B.', 'C.'))
+
+ggsave(filename='figure_for_lotus.png', plot = g3, height = 14, width = 10, units = 'in', dpi = 300)
+
+

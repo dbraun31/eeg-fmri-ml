@@ -15,12 +15,14 @@ from scipy.signal import butter, filtfilt
 
 class Reformat:
 
-    def __init__(self, subjects, num_lags, overwrite=False):
+    def __init__(self, subjects, n_lags, overwrite=False, n_freq=40,
+                 data_path=Path('analysis/data/formatted/full')):
         self.subjects = subjects
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
-        self.data_path = Path('analysis/data/formatted')
-        self.num_lags = num_lags
+        self.data_path = data_path
+        self.num_lags = n_lags
+        self.n_freq = n_freq
         self.data_path.mkdir(parents=True, exist_ok=True)
         completed = glob(str(self.data_path / Path('sub')) + '*')
         self.completed = [Path(x).stem for x in completed]

@@ -51,38 +51,43 @@ for subject in subjects:
 
     scoring = make_scorer(rmse, greater_is_better=False)
 
+    obs = {}
+
 # --- BASELINE --- #
     bm = BaselineModel()
     bm.fit(X_train, y_train)
     y_pred = bm.predict(X_test)
-    loss_baseline = get_final_score(bm, d, scoring)
+    obs['loss_baseline'] = get_final_score(bm, d, scoring)
+ 
 
 
 # --- RIDGE --- #
-
+    print('--- Fitting ridge ---')
 
     pipe = Pipeline([
         ('scaler', StandardScaler()),
          ('ridge', Ridge())])
 
 
-    param_grid = {'ridge__alpha': np.logspace(np.log10(.1), np.log10(10), 7)}
+    param_grid = {'ridge__alpha': np.logspace(np.log10(1000000), np.log10(100), 100)}
 
     grid = GridSearchCV(estimator=pipe,
                         param_grid=param_grid,
                         cv=cv_splits,
-                        scoring = 'neg_root_mean_squared_error')
+                        scoring = 'neg_root_mean_squared_error',
+                        n_jobs=os.cpu_count() - 1)
 
     grid.fit(X_train, y_train)
-    loss_ridge = get_final_score(grid.best_estimator_, d, scoring)
+    obs['loss_ridge'] = get_final_score(grid.best_estimator_, d, scoring)
 
 # --- PLS --- #
+    print('--- Fitting PLS --- ')
 
     pipe = Pipeline([
         ('scaler', StandardScaler()),
         ('pls', PLSRegression(scale=False))])
 
-    param_grid = {'pls__n_components': [2, 5, 10, 15, 20]}
+    param_grid = {'pls__n_components': [2, 3, 4]}
 
     grid = GridSearchCV(estimator=pipe,
                         param_grid=param_grid,
@@ -91,37 +96,37 @@ for subject in subjects:
                         n_jobs=-1)
 
     grid.fit(X_train, y_train)
-    loss_pls = get_final_score(grid.best_estimator_, d, scoring)
+    obs['loss_pls'] = get_final_score(grid.best_estimator_, d, scoring)
 
 # --- RANDOM FOREST --- #
+    print('--- Fitting random forest ---')
 
-    rf =  RandomForestRegressor(
-            max_depth=5,
-            min_samples_leaf=8,
-            n_estimators=100,
-            bootstrap=True,
-            n_jobs=-1)
+	param_grid = {
+		"n_estimators": [100, 300],
+		"max_depth": [3, 5, 7],
+		"min_samples_leaf": [4, 8, 16],
+		"max_features": ["sqrt", 0.3, 0.5],
+		"bootstrap": [True]   # keep True to match your prior setting
+	}
 
-    loss_rf = get_final_score(rf, d, scoring)
+    rf =  RandomForestRegressor(n_jobs=os.cpu_count()-1)
 
-    obs = np.column_stack([subject, loss_baseline, loss_ridge, loss_rf])
-    result = pd.concat([result, pd.DataFrame(obs)], axis=0)
+    grid = RandomizedSearchCV(estimator=rf,
+                              param_distributions=param_grid,
+                              cv=cv_splits,
+                              scoring='neg_root_mean_squared_error',
+                              n_jobs=os.cpu_count()-1)
+
+    grid.fit(X_train, y_train)
+
+    obs['loss_rf'] = get_final_score(grid.best_estimator_, d, scoring)
+
 
 # --- XGBoost --- #
+    print('--- Fitting XGBoost ---')
     model = XGBRegressor(
             tree_method='gpu_hist',
-            max_bin=64,
             gpu_id=0)
-
-
-
-    search_spaces = {
-		'n_estimators': Integer(50, 500),
-		'max_depth': Integer(3, 10),
-		'learning_rate': Real(0.01, 0.3, prior='log-uniform'),
-		'subsample': Real(0.5, 1.0),
-		'colsample_bytree': Real(0.5, 1.0)
-	}
 
     param_grid = {
 		"n_estimators": [100, 300, 500, 1000],        # more trees for stability
@@ -142,23 +147,15 @@ for subject in subjects:
                         scoring = 'neg_root_mean_squared_error',
                         n_jobs=-1)
 
-    bayes = BayesSearchCV(estimator=model,
-                          search_spaces=search_spaces,
-                          n_iter=30,
-                          cv=cv_splits,
-                          scoring='neg_root_mean_squared_error',
-                          n_jobs=-1)
 
     grid.fit(X_train, y_train)
-
-    bayes.fit(X_train, y_train)
-
-    loss_xgb = get_final_score(grid.best_estimator_, d, scoring)
+    obs['loss_xgb'] = get_final_score(grid.best_estimator_, d, scoring)
 
 
 
+    row = np.column_stack([subject] + list(obs.values()))
+    result = pd.concat([result, pd.DataFrame(row)], axis=0)
 
+result.columns = ['subject'] + list(obs.keys())
 
-result.columns = ['subject', 'baseline', 'ridge', 'random_forest']
-
-result.to_csv(root / Path('within_subject.csv'), index=False)
+result.to_csv(root / Path('within_subjects.csv'), index=False)

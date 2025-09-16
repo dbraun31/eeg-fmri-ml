@@ -32,27 +32,35 @@ def drop_lags(X, seconds_back=10):
     return out
 
 
-
 def get_cv_splits(session):
-    '''
-     Takes in session data {'run1': {'X': ..., 'y': ...}, ...}
-     Returns cv_splits
-       [(train_idx1, test_idx1), (train_idx2, test_idx2), ...]
-    '''
+    """
+    Custom cross-validation splitter.
 
+    Parameters
+    ----------
+    session : dict
+        Session data structured as 
+        {'run1': {'X': ..., 'y': ...}, 'run2': {...}, ...}
+
+    Returns
+    -------
+    cv_splits : list of tuples
+        List of (train_idx, test_idx) arrays for each run.
+    """
     # Concatenate data
     runs = list(session.keys())
-    X = np.concatenate([session[x]['X'] for x in runs])
-    y = np.concatenate([session[x]['y']['DNa'] for x in runs])
+    X = np.concatenate([session[run]['X'] for run in runs])
+    y = np.concatenate([session[run]['y']['DNa'] for run in runs])
 
     # Get all run indices
     run_idxs = {}
     start = 0
     for run in runs:
-        stop = session[run]['X'].shape[0] 
-        run_idxs[run] = np.array(range(start, start+stop))
+        stop = session[run]['X'].shape[0]
+        run_idxs[run] = np.arange(start, start + stop)
         start += stop
 
+    # Build CV splits
     cv_splits = []
     for run in runs:
         test_idx = run_idxs[run]
