@@ -31,6 +31,10 @@ plot_significance <- function(networks=c(), label_middle=TRUE) {
 		group_by(bin, lag, network) %>% 
 		summarize(cors = mean(cors)) %>% 
 		mutate(network = factor(network, levels = networks))
+	
+	small <- floor(min(pd$cors)*100)/100
+	big <- ceiling(max(pd$cors)*100)/100
+	
     if (label_middle) {
 		sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
 							 values = rescale(c(small, 0, big)),
@@ -62,7 +66,8 @@ plot_significance <- function(networks=c(), label_middle=TRUE) {
 			  panel.grid = element_blank(),
 			  legend.position = 'bottom',
 			  text = element_text(size = 25),
-			  axis.text.x = element_text(angle = 45, hjust=1, size = 14),
+			  axis.text = element_text(size = 18),
+			  axis.text.x = element_text(angle = 45, hjust=1),
 			  legend.text = element_text(size = 16, angle = 45, hjust=1),
 			  legend.title = element_text(margin = margin(r = 30)))
 		

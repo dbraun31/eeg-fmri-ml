@@ -1,0 +1,28 @@
+rm(list=ls())
+library(tidyverse)
+library(reticulate)
+use_condaenv('eeg-fmri')
+
+py_run_string("
+import numpy as np
+truth = np.load('truth.npy')
+surrogates = np.load('surrogates.npy')
+              ")
+
+truth <- py$truth
+surrogates <- py$surrogates
+
+data.frame(surrogates=surrogates) %>% 
+    ggplot(aes(x = surrogates)) + 
+    geom_histogram(color = 'black', fill = 'steelblue', bins = 20) +
+    geom_point(aes(x = mean(!!truth), y = 1), shape = 8, color = 'steelblue', size = 4) + 
+    labs(
+        x = latex2exp::TeX('$R^2$'),
+        y = 'Frequency'
+    ) + 
+    theme_bw() + 
+    theme(panel.grid = element_blank(),
+          axis.ticks = element_blank(),
+          text = element_text(size = 16))
+
+ggsave('surrogate_result.png', height = 6, width = 6, units = 'in', dpi = 300)

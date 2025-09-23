@@ -89,9 +89,9 @@ ggsave(plot=p, file=path(root, 'figures/significance/FPN_significance.png'),
 
 # - Inter session plot - #
 
-text <- 20
-p1 <- plot_inter_session('DNa')
-p2 <- plot_inter_session('SAL')
+text <- 30
+p1 <- plot_inter_session('DNa', label_middle = FALSE)
+p2 <- plot_inter_session('SAL', label_middle = FALSE)
 # Mean ICC for SAL = 0.53 (0.14)
 
 g <- ggarrange(p1, p2, nrow = 2, labels = c('A.', 'B.'),

@@ -1,72 +1,56 @@
+from pathlib import Path
 import numpy as np
+from glob import glob
+import pickle
 
+def train_test_across(held_out_subject):
+    # Held out subject in form sub-\d\d\d
 
-def train_test_split(d, train_session='ses-001', network='DNa'):
-    '''
-    Given data d, return X_train, y_train, X_test, y_test
-    session controls whether data is from ses 1 or 2
-    '''
+    # Get data
+    droot = Path('data/formatted/reduced')
+    subjects = [Path(x).stem for x in glob(str(droot / Path('*')))]
+    subjects = sorted(subjects, key = lambda x: int(x.split('-')[1]))
+    subjects_train = [x for x in subjects if x != held_out_subject]
 
-    test_session = 'ses-002' if train_session == 'ses-001' else 'ses-001'
-    train_runs = list(d[train_session].keys())
-    test_runs = list(d[test_session].keys())
+    X_l = []
+    y_l = []
 
-    # Train test split
-    X_train = np.concatenate([drop_lags(d[train_session][x]['X']) for x in train_runs], axis=0)
-    y_train = np.concatenate([d[train_session][x]['y'][network] for x in train_runs], axis=0)
-    X_test = np.concatenate([drop_lags(d[test_session][x]['X']) for x in test_runs], axis=0)
-    y_test = np.concatenate([d[test_session][x]['y'][network] for x in test_runs], axis=0)
+    def concat(d):
+        X_l = []
+        y_l = []
+        for session in d:
+            runs = list(d[session].keys())
+            X_ses = np.concatenate([d[session][x]['X'] for x in runs], axis=0)
+            y_ses = np.concatenate([d[session][x]['y']['DAN'] for x in runs], axis=0)
+
+            X_l.append(X_ses)
+            y_l.append(y_ses)
+
+        X_sub = np.concatenate(X_l, axis=0)
+        y_sub = np.concatenate(y_l, axis=0)
+
+        return X_sub, y_sub
+
+    for subject in subjects_train:
+
+        dpath = droot / Path(f'{subject}.pkl')
+        with open(dpath, 'rb') as file:
+            d = pickle.load(file)
+
+        X_sub, y_sub = concat(d)
+
+        X_l.append(X_sub)
+        y_l.append(y_sub)
+
+    X_train = np.concatenate(X_l, axis=0)
+    y_train = np.concatenate(y_l, axis=0)
+
+    dpath = droot / Path(f'{held_out_subject}.pkl')
+    with open(dpath, 'rb') as file:
+        d_test = pickle.load(file)
+
+    X_test, y_test = concat(d_test)
+
 
     return X_train, y_train, X_test, y_test
-
-
-    
-def drop_lags(X, seconds_back=10):
-    # X is (obs, channels, freqs, lags)
-    ar = X.reshape(X.shape[0], 31, 40, -1)
-    n_lags = (seconds_back // 2) + 1
-
-    ar_trim = ar[:, :, :, :n_lags]
-    out = ar_trim.reshape(X.shape[0], -1)
-
-    return out
-
-
-def get_cv_splits(session):
-    """
-    Custom cross-validation splitter.
-
-    Parameters
-    ----------
-    session : dict
-        Session data structured as 
-        {'run1': {'X': ..., 'y': ...}, 'run2': {...}, ...}
-
-    Returns
-    -------
-    cv_splits : list of tuples
-        List of (train_idx, test_idx) arrays for each run.
-    """
-    # Concatenate data
-    runs = list(session.keys())
-    X = np.concatenate([session[run]['X'] for run in runs])
-    y = np.concatenate([session[run]['y']['DNa'] for run in runs])
-
-    # Get all run indices
-    run_idxs = {}
-    start = 0
-    for run in runs:
-        stop = session[run]['X'].shape[0]
-        run_idxs[run] = np.arange(start, start + stop)
-        start += stop
-
-    # Build CV splits
-    cv_splits = []
-    for run in runs:
-        test_idx = run_idxs[run]
-        train_idx = np.setdiff1d(np.arange(X.shape[0]), test_idx)
-        cv_splits.append((train_idx, test_idx))
-
-    return cv_splits
-
 

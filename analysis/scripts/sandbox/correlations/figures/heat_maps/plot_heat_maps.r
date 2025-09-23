@@ -55,9 +55,9 @@ plot_heat <- function(networks) {
 		theme(strip.background = element_rect(fill = NA),
 			  panel.grid = element_blank(),
 			  axis.ticks = element_blank(),
-			  axis.text.y = element_text(size = 8),
+			  axis.text = element_text(size = 18),
 			  legend.position = 'bottom',
-			  text = element_text(size=size))
+			  text = element_text(size=text))
 
 	return(p1)
 

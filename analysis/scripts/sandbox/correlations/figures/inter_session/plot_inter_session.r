@@ -1,4 +1,4 @@
-plot_inter_session <- function(network) {
+plot_inter_session <- function(network, label_middle=TRUE) {
 	get_icc <- function(s1, s2) {
 		d <- data.frame(s1, s2)
 		i <- ICC(d)$results
@@ -46,6 +46,18 @@ plot_inter_session <- function(network) {
 	big <- ceiling(max(pd2$cors) * 100) / 100
 
 
+	if (label_middle) {
+	    sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+	                                values = rescale(c(small, 0, big)),
+	                                breaks = c(small, 0, big),
+	                                limits = c(small, big))  
+	} else {
+	    sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+	                                values = rescale(c(small, 0, big)),
+	                                breaks = c(small, big),
+	                                limits = c(small, big))  
+	}
+	
 	p2 <- pd2 %>%
 		mutate(session = recode(session, `ses-001` = 'Session 1', `ses-002` = 'Session 2')) %>% 
 		ggplot(aes(x = frequency, y = lag)) +
@@ -55,18 +67,13 @@ plot_inter_session <- function(network) {
 			 y = 'Lag (s)',
 			 title = glue('{network} network'),
 			 fill = latex2exp::TeX('$\\rho_{~~EEG,fMRI}$')) + 
-		scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
-							 values = rescale(c(min(pd2$cors), 0, 
-												max(pd2$cors))),
-							 limits = c(small, big),
-							 breaks = c(small, 0, big),
-							 labels = c(small, 0, big)) + 
+	    sfg + 
 		facet_wrap(~session) + 
 		theme_bw() + 
 		theme(legend.position = 'bottom',
 			  axis.ticks = element_blank(),
 			  panel.grid = element_blank(),
-			  legend.text = element_text(angle = 45, hjust=1),
+			  legend.text = element_text(angle = 55, hjust=1),
 			  strip.background = element_rect(fill = NA),
 			  text = element_text(size = text))
 	
