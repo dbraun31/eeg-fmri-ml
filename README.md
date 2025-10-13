@@ -122,7 +122,7 @@ are very finicky and likely to require dependency hunting and
 troubleshooting: `arrow`, `eegUtils`. The second package (`eegUtils`) can
 be extremely painful, and it's only necessary for making EEG topo plots in R.
 You can skip installing `eegUtils` if you don't care about topo plots, or
-follow the troubleshooting instructions in `eeg_utils_troubleshooting.txt`
+follow the troubleshooting instructions in `eeg_utils_troubleshooting.md`
 to go down the rabbit hole (we can work on this one together).
 
 To verify whether packages have installed successfully, run:
