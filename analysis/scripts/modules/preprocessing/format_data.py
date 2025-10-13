@@ -12,6 +12,8 @@ import os
 import numpy as numpy
 from types import SimpleNamespace
 from scipy.signal import butter, filtfilt
+import sys
+sys.path.append(str(here()))
 
 class Reformat:
 

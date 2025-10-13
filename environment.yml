@@ -3,11 +3,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
   - ipython
   - mne
-  - pyarrow
-  - autoreject
   - pyprojroot
+  - python=3.11
   - scikit-learn=1.2.2
+  - autoreject
+  - pyarrow
+  - optuna
+  - xgboost
+  - shap
 prefix: /home/dave/miniconda3/envs/eeg-fmri

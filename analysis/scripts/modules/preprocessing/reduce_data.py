@@ -7,6 +7,8 @@ import numpy as np
 import pickle
 from pathlib import Path
 from itertools import product
+import sys
+sys.path.append(str(here()))
 
 
 
