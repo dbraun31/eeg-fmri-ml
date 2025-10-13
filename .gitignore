@@ -12,3 +12,5 @@ pull.sh
 **/*.set
 **/*.fdt
 **/*.xlsx
+**/*.npy
+**/*.pkl
