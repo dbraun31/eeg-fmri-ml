@@ -78,7 +78,7 @@ Python environment by configuring and activating the Python environment for
 this project (which will install all needed code libraries).
 
 ```bash
-cd ~ # Or whever you want to clone the repo
+cd ~ # Or wherever you want to clone the repo
 git clone https://github.com/dbraun31/eeg-fmri-ml.git
 cd eeg-fmri-ml
 conda env create -f environment.yml

@@ -9,6 +9,7 @@ from pathlib import Path
 from itertools import product
 import sys
 sys.path.append(str(here()))
+os.chdir(here())
 
 
 
@@ -38,8 +39,9 @@ class Reduce:
 
     def run(self):
 
-        for subject in subjects:
-            print(f'---Processing subject {subject} of {subjects[-1]}---\n')
+        for subject in self.subjects:
+            print('\n')
+            print(f'---Processing subject {subject} of {self.subjects[-1]}---\n')
             out = {}
 
             dfile = self.dpath / Path(f'{subject}.pkl')
@@ -58,8 +60,11 @@ class Reduce:
             # Write per subject
             out_path = Path(f'analysis/data/formatted/reduced/{subject}.pkl')
 
+            if not os.path.exists(out_path.parent):
+                os.makedirs(out_path.parent)
+
             with open(out_path, 'wb') as file:
-                pickle.dump(out, out_path)
+                pickle.dump(out, file)
 
 
     def _reduce_eeg(self, X):
@@ -69,8 +74,7 @@ class Reduce:
         cols = list(product(self.ch_names, freqs, lags))
         cols = [f'{x[0]}_{x[1]}_{x[2]}' for x in cols]
 
-        # --- Pandas silliness ---
-        # (i cant believe ppl do this)
+        # --- Transform array to df and reshape ---
         X_df = pd.DataFrame(X, columns=cols)
         X_df['sample'] = range(1, X_df.shape[0]+1)
         X_df = X_df.melt(id_vars='sample', var_name='col', value_name='power')

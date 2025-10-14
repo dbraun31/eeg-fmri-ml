@@ -17,8 +17,7 @@ sys.path.append(str(here()))
 
 class Reformat:
 
-    def __init__(self, subjects, n_lags, overwrite=False, n_freq=40,
-                 data_path=Path('analysis/data/formatted/full')):
+    def __init__(self, subjects, n_lags, data_path, overwrite=False, n_freq=40):
         self.subjects = subjects
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
@@ -290,10 +289,24 @@ class Reformat:
 
 if __name__ == '__main__':
 
+    args = sys.argv[1:]
+    if not args:
+        data_path = Path('analysis/data/formatted/full')
+        print('\n')
+        print('No path to data specified.')
+        print(f'Assuming data is at {data_path}')
+        print('\n')
+    else:
+        data_path = Path(args[0])
+        print('\n')
+        print('Assuming data is at user-specified directory:')
+        print(data_path)
+        print('\n')
+
     os.chdir(here())
     subjects = sorted([Path(x).name for x in glob('analysis/data/original/*') if 'sub' in x])
-    num_lags=11
-    reformat = Reformat(subjects, num_lags=num_lags)
+    n_lags=11
+    reformat = Reformat(subjects, n_lags=n_lags, data_path=data_path)
     reformat.run()
 
 
