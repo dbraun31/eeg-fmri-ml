@@ -64,8 +64,8 @@ hdiutil detach /Volumes/gfortran-*
 ```bash
 ls -l | which gfortran
 ```
-    Then move it to the correct location (eg, `sudo mv /usr/local/gfortran
-    /opt/gfortran`).
+Then move it to the correct location (eg, `sudo mv /usr/local/gfortran
+/opt/gfortran`).
 
 6. Try installing `eegUtils` again:
 
