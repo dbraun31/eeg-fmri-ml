@@ -52,8 +52,9 @@ brew remove gfortran
 ```bash
 curl -L -o gfortran.dmg https://github.com/fxcoudert/gfortran-for-macOS/releases/download/v12.2/gfortran-12.2-arm64.dmg
 hdiutil attach gfortran.dmg
-cd /Volumes/gfortran-* # I think just cd into whatever version gets installed here
+cd /Volumes/gfortran-* # Just cd into whatever version gets installed here
 sudo installer -pkg *.pkg -target /
+cd ~
 hdiutil detach /Volumes/gfortran-*
 ```
 
