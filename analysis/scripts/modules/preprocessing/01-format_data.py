@@ -14,6 +14,9 @@ from types import SimpleNamespace
 from scipy.signal import butter, filtfilt
 import sys
 
+# Dev
+from IPython import embed
+
 class Reformat:
     """
     Reformat EEG and fMRI data into structured arrays suitable for analysis.
@@ -64,11 +67,25 @@ class Reformat:
       and that filenames start with the network name.
     - The number of EEG timepoints (after lags) must match the number of fMRI 
       observations; otherwise, the run is skipped.
-    - Currently hardcoded fMRI networks: 'DAN', 'DANa', 'DANb', 'DMN', 'DNa', 
+    - Currently hardcoded fMRI networks:'DANa', 'DANb', 'DNa', 
       'DNb', 'SAL', 'FPCNa', 'FPCNb'.
+      - Script assumes fmri files are named [NETWORK]_*.txt
     """
 
-    def __init__(self, subjects, n_lags, in_path, out_path, overwrite=False, n_freq=40):
+    def __init__(self, n_lags, in_path, out_path, overwrite=False, n_freq=40):
+
+
+        # Infer subject numbers
+        subjects = sorted([Path(x).name for x in glob(str(in_path / Path('*'))) if 'sub' in x])
+        if not subjects and in_path != Path('analysis/data/original'):
+            raise RuntimeError('Could not find data at default location '
+                               '(analysis/data/original). Please specify '
+                               'data path with: python 01-format_data.py '
+                               'path/to/data')
+        if not subjects:
+            raise RuntimeError('Could not find subjects in the provided '
+                               'data path. Ensure subject directories are '
+                               'labeled within data path as "sub-\d\d\d" ')
 
         # Initializing class-level variables
         self.subjects = subjects
@@ -84,7 +101,7 @@ class Reformat:
         self.overwrite = overwrite
 
         # Hardcode fmri networks
-        self.fmri_networks = ['DAN', 'DANa', 'DANb', 'DMN', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
+        self.fmri_networks = ['dATNa', 'dATNb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
 
 
     def run(self):
@@ -135,7 +152,7 @@ class Reformat:
                 if not all([fmri_lens[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
                     message = ("Number of files detected for EEG not equal to "
                              "number detected for fMRI.\n" 
-                            f"Subject: {subject}, Session: {session}, Run: {run}\n"
+                            f"Subject: {subject}, Session: {session}\n"
                             f"EEG files: {files_eeg}\n"
                             f"fMRI files: {files_fmri}\n"
                             "Skipping run.")
@@ -162,33 +179,10 @@ class Reformat:
                     if X is None:
                         continue
 
-                    # NETWORK NAME INFERENCE
-                    # Hard assumption that network name is first arg in
-                    # filename, separated with _
-                    network_names = [Path(x).stem.split('_')[0] for x in file_fmri]
-
-                    # Ensure the assumption above checks out
-                    # This will throw an error if there are differences
-                    # even in capitalization or spelling between the
-                    # network names in the fmri txt data and the hard coded
-                    # networks above (~ line 85)
-
-                    try:
-                        assert(sorted(network_names) == sorted(self.fmri_networks))
-                    except Exception as e:
-                        print('Inferred fMRI network names do not match '
-                        'hard coded network names.')
-                        print(f'Inferred names: {sorted(network_names)}')
-                        print('\n')
-                        print(f'Coded names: {sorted(self.fmri_networks)}')
-                        print('\n')
-                        print('Quitting...')
-                        sys.exit(1)
-
                     # Convert fmri files for each network to a dict with:
                     # {'network1': np.array, 'network2': ...}
                     # see _process_fmri function below
-                    y = self._process_fmri(file_fmri, network_names)
+                    y = self._process_fmri(file_fmri, self.fmri_networks)
 
                     # Ensure fmri data have same observation count
                     if not all([len(x) == len(list(y.values())[0]) for x in y.values()]):
@@ -202,13 +196,26 @@ class Reformat:
                         self._update_log(message)
                         continue
 
+
+                    # Dev
+                    #embed()
+
+                    # -- DROP NANS -- #
+                    # Should add validation to check that all nans in fMRI
+                    # are at same obs
+                    
+                    # Mask nans in fMRI data and drop in EEG
+                    mask = ~np.isnan(y[self.fmri_networks[0]])
+                    X = X[mask, :]
+                    y = {k: k[y][mask] for k in y}
+
                     # Try chopping off last TR in EEG if it makes obs equal
                     # with fMRI
-                    if X[:-1, :].shape[0] == len(y['DAN']):
+                    if X[:-1, :].shape[0] == len(y[self.fmri_networks[0]]):
                         X = X[:-1, :]
 
                     # Validate equal observations across X and y
-                    if X.shape[0] != len(y['DMN']):
+                    if X.shape[0] != len(y[self.fmri_networks[0]]):
                         message = (f"Unequal observations for {subject} "
                                    f"{session} {run}, X: {X.shape[0]}, ")
                         for network in y:
@@ -334,7 +341,7 @@ class Reformat:
         # Get the lags
         lag_ar = np.zeros((tf.shape[0], tf.shape[1], tf.shape[2], num_lags))
 
-        # Only fill in starting at TR 9 so can fully backfill with lags
+        # Only fill in starting at TR num_lags-1 so can fully backfill with lags
         for i in range(num_lags-1, tf.shape[0]):
             for lag in range(num_lags):
                 lag_ar[i, :, :, lag] = tf[i-lag, :, :]
@@ -449,21 +456,10 @@ if __name__ == '__main__':
         else:
             out_path = in_path / Path('../formatted/full')
 
-    # Infer subject numbers
-    subjects = sorted([Path(x).name for x in glob(str(in_path / Path('*'))) if 'sub' in x])
 
-    if not subjects and not args:
-        raise RuntimeError('Could not find data at default location '
-                           '(analysis/data/original). Please specify '
-                           'data path with: python 01-format_data.py '
-                           'path/to/data')
-    if not subjects:
-        raise RuntimeError('Could not find subjects in the provided '
-                           'data path. Ensure subject directories are '
-                           'labeled within data path as "sub-\d\d\d" ')
 
     # Initialize and run reformatting
-    reformat = Reformat(subjects, n_lags=n_lags, in_path=in_path,
+    reformat = Reformat(n_lags=n_lags, in_path=in_path,
                         out_path=out_path, overwrite=overwrite)
     reformat.run()
 
