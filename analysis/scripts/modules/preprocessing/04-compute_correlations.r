@@ -89,7 +89,7 @@ format_cors <- function(data, label) {
 }
 
 
-ch_names <- readlines(path(data_root, '../correlation_data/ch_names.txt'))
+ch_names <- readLines(path(data_root, '../correlation_data/ch_names.txt'))
 
 # Combine
 d <- do.call(rbind, lapply(seq_along(cors), function(i) format_cors(cors[[i]], names(cors[i]))))
@@ -107,7 +107,7 @@ d <- d %>%
                             `DAN` = 'dATN', `DANa` = 'dATN-A', `DANb` = 'dATN-B'))
 
 # Save
-write_feather(d, path(root, 'correlations_long.feather'))
+write_feather(d, path(root, '../correlation_data/correlations_long.feather'))
 
 
 
