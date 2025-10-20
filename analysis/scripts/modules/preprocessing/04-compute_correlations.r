@@ -89,7 +89,6 @@ format_cors <- function(data, label) {
 }
 
 
-ch_names <- readRDS(path(data_root, 'ch_names.rds'))
 ch_names <- readlines(path(data_root, '../correlation_data/ch_names.txt'))
 
 # Combine
