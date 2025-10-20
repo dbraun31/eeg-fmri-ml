@@ -197,15 +197,6 @@ class Reformat:
                         continue
 
 
-                    # -- DROP NANS -- #
-                    # Should add validation to check that all nans in fMRI
-                    # are at same obs
-                    
-                    # Mask nans in fMRI data and drop in EEG
-                    mask = ~np.isnan(y[self.fmri_networks[0]])
-                    X = X[mask, :]
-                    y = {k: y[k][mask] for k in y}
-
                     # Try chopping off last TR in EEG if it makes obs equal
                     # with fMRI
                     if X[:-1, :].shape[0] == len(y[self.fmri_networks[0]]):
@@ -221,6 +212,16 @@ class Reformat:
                         print(message + '\n')
                         self._update_log(message)
                         continue
+
+
+                    # -- DROP NANS -- #
+                    # Should add validation to check that all nans in fMRI
+                    # are at same obs
+                    
+                    # Mask nans in fMRI data and drop in EEG
+                    mask = ~np.isnan(y[self.fmri_networks[0]])
+                    X = X[mask, :]
+                    y = {k: y[k][mask] for k in y}
 
                     d[session][run] = {'X': X, 'y': y}
 
