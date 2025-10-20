@@ -81,7 +81,7 @@ if __name__ == '__main__':
     # Process each subject and concatenate
     for subject in subjects:
         new_d = process_subject(subject, col_names,
-                                data_path=f'{data_root}/../formatted')
+                                data_path=f'{data_root}/../formatted/full')
         d = pd.concat([d, new_d], axis=0)
 
     out_path = Path(f'{data_root}/../correlation_data')
