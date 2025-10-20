@@ -198,7 +198,7 @@ class Reformat:
 
 
                     # Dev
-                    #embed()
+                    embed()
 
                     # -- DROP NANS -- #
                     # Should add validation to check that all nans in fMRI
@@ -207,7 +207,7 @@ class Reformat:
                     # Mask nans in fMRI data and drop in EEG
                     mask = ~np.isnan(y[self.fmri_networks[0]])
                     X = X[mask, :]
-                    y = {k: k[y][mask] for k in y}
+                    y = {k: y[k][mask] for k in y}
 
                     # Try chopping off last TR in EEG if it makes obs equal
                     # with fMRI
