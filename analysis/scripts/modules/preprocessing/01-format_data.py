@@ -197,9 +197,6 @@ class Reformat:
                         continue
 
 
-                    # Dev
-                    embed()
-
                     # -- DROP NANS -- #
                     # Should add validation to check that all nans in fMRI
                     # are at same obs
