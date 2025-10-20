@@ -64,23 +64,27 @@ if __name__ == '__main__':
     args = sys.argv[1:]
 
     if not args:
-        data_root = Path('analysis/data')
+        data_root = Path('analysis/data/original')
         os.chdir(here())
         sys.path.append(str(here()))
     else:
         data_root = Path(args[0])
 
-    raw = mne.io.read_raw_eeglab(f'{data_root}/original/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
+    raw = mne.io.read_raw_eeglab(f'{data_root}/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
     channels = raw.info['ch_names']
     col_names = make_column_names(channels)
 
-    subjects = [Path(x).stem for x in glob(f'{data_root}/formatted/full/*')]
+    subjects = [Path(x).stem for x in glob(f'{data_root}/../formatted/full/*')]
 
     d = pd.DataFrame()
 
     # Process each subject and concatenate
     for subject in subjects:
-        new_d = process_subject(subject, col_names, data_path=f'{data_root}/formatted')
+        new_d = process_subject(subject, col_names,
+                                data_path=f'{data_root}/../formatted')
         d = pd.concat([d, new_d], axis=0)
 
-    d.reset_index(drop=True).to_feather(f'{data_root}/merged_data.feather')
+    out_path = Path(f'{data_root}/../correlation_data')
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
+    d.reset_index(drop=True).to_feather(out_path / Path('merged_data.feather'))
