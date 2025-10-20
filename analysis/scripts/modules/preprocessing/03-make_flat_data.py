@@ -7,6 +7,7 @@ from glob import glob
 from pathlib import Path
 import pickle
 from itertools import product
+import sys
 
 '''
 This script converts the nested dict data in formatted/full to a flat data
