@@ -88,3 +88,6 @@ if __name__ == '__main__':
     if not os.path.exists(out_path):
         os.mkdir(out_path)
     d.reset_index(drop=True).to_feather(out_path / Path('merged_data.feather'))
+    with open(f'{data_root}/../correlation_data/ch_names.txt', 'w') as file:
+        file.write('\n'.join(channels))
+

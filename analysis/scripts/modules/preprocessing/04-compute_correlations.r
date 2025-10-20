@@ -49,10 +49,10 @@ if(file.exists(path(root, 'correlation_data/cors.rds'))){
 } else {
     
     # Import
-    if (!file.exists(path(data_root, 'correlation_data/merged_data.feather'))) {
+    if (!file.exists(path(data_root, '../correlation_data/merged_data.feather'))) {
         stop('Need to run 03-make_flat_data.py before this script.')
     }
-    d <- read_feather(path(data_root, 'correlation_data/merged_data.feather'))
+    d <- read_feather(path(data_root, '../correlation_data/merged_data.feather'))
     
     # Extract modality columns
     eeg_cols <- colnames(d)[which(colnames(d) == 'Fp1_1_0'):(ncol(d))]
@@ -74,7 +74,7 @@ if(file.exists(path(root, 'correlation_data/cors.rds'))){
     })
     
     
-    saveRDS(cors, file = path(root, 'cors.rds'))
+    saveRDS(cors, file = path(data_root, '../correlation_data/cors.rds'))
 }
 
 format_cors <- function(data, label) {
@@ -89,7 +89,8 @@ format_cors <- function(data, label) {
 }
 
 
-ch_names <- readRDS(path(root, 'ch_names.rds'))
+ch_names <- readRDS(path(data_root, 'ch_names.rds'))
+ch_names <- readlines(path(data_root, '../correlation_data/ch_names.txt'))
 
 # Combine
 d <- do.call(rbind, lapply(seq_along(cors), function(i) format_cors(cors[[i]], names(cors[i]))))
