@@ -37,7 +37,9 @@ compute_spearman_cor <- function(eeg, fmri) {
 
 # Run 
 
-if (!file.exists(path(root, 'cors.rds'))) {
+if(file.exists(path(root, 'cors.rds'))){
+    cors <- readRDS(path(root, 'cors.rds'))
+} else {
     
     # Import
     d <- read_feather('analysis/data/merged_data.feather')
@@ -64,9 +66,6 @@ if (!file.exists(path(root, 'cors.rds'))) {
     
     saveRDS(cors, file = path(root, 'cors.rds'))
     
-} else {
-    cors <- readRDS(path(root, 'cors.rds'))
-}
 
 format_cors <- function(data, label) {
     data <- data.frame(t(data))
