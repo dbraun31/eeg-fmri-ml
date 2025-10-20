@@ -16,7 +16,7 @@ frame that can be used to compute correlations. Output is stored in
 
 
 
-def process_subject(subject, col_names, data_path=Path('data/formatted')):
+def process_subject(subject, col_names, data_path):
 
     file = data_path / Path(f'{subject}.pkl')
     with open(file, 'rb') as file:
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     channels = raw.info['ch_names']
     col_names = make_column_names(channels)
 
-    subjects = [Path(x).stem for x in glob(f'{data_root}/formatted/*')]
+    subjects = [Path(x).stem for x in glob(f'{data_root}/formatted/full/*')]
 
     d = pd.DataFrame()
 

@@ -8,6 +8,13 @@ library(arrow)
 setwd(here())
 root <- path('analysis/scripts/sandbox/correlations')
 
+args <- commandArgs(trailingOnly=TRUE)
+
+if (length(args) == 0) {
+    data_root <- path('analysis/data')
+} else{
+    data_root <- path(args[1])
+}
 
 # Function defs
 
@@ -37,12 +44,15 @@ compute_spearman_cor <- function(eeg, fmri) {
 
 # Run 
 
-if(file.exists(path(root, 'cors.rds'))){
-    cors <- readRDS(path(root, 'cors.rds'))
+if(file.exists(path(root, 'correlation_data/cors.rds'))){
+    cors <- readRDS(path(root, 'correlation_data/cors.rds'))
 } else {
     
     # Import
-    d <- read_feather('analysis/data/merged_data.feather')
+    if (!file.exists(path(data_root, 'correlation_data/merged_data.feather'))) {
+        stop('Need to run 03-make_flat_data.py before this script.')
+    }
+    d <- read_feather(path(data_root, 'correlation_data/merged_data.feather'))
     
     # Extract modality columns
     eeg_cols <- colnames(d)[which(colnames(d) == 'Fp1_1_0'):(ncol(d))]
@@ -65,7 +75,7 @@ if(file.exists(path(root, 'cors.rds'))){
     
     
     saveRDS(cors, file = path(root, 'cors.rds'))
-    
+}
 
 format_cors <- function(data, label) {
     data <- data.frame(t(data))
