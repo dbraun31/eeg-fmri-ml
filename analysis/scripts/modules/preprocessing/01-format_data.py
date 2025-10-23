@@ -18,6 +18,7 @@ import sys
 from IPython import embed
 
 class Reformat:
+
     """
     Reformat EEG and fMRI data into structured arrays suitable for modeling and analysis.
 
@@ -91,7 +92,7 @@ class Reformat:
       the frequency bins used for EEG decomposition.
     """
 
-    def __init__(self,  in_path, out_path, fmri_networks, freq_space='log', 
+    def __init__(self,  in_path, out_path, fmri_timeseries, freq_space='log', 
                  n_lags=11, overwrite=False, n_freq=40):
 
 
@@ -122,7 +123,7 @@ class Reformat:
         self.out_path = out_path
         self.num_lags = n_lags
         self.n_freq = n_freq
-        self.fmri_networks = fmri_networks
+        self.fmri_timeseries = fmri_timeseries
         self.out_path.mkdir(parents=True, exist_ok=True)
         completed = glob(str(self.out_path / Path('sub')) + '*')
         self.completed = [Path(x).stem for x in completed]
@@ -150,19 +151,25 @@ class Reformat:
             for session in ['ses-001', 'ses-002']:
                 d[session] = {}
                 path_eeg = self.in_path / Path(f'{subject}/{session}/eeg')
-                path_fmri= self.in_path / Path(f'{subject}/{session}/func')
+                path_fmri= self.in_path / Path(f'{subject}/{session}/func/general')
 
                 # Retrieve data files for each modality
                 files_eeg = glob(str(path_eeg / Path('*.set')))
                 files_eeg = sorted(files_eeg, key=self._sort)
 
-                # Build a {'network': [path to network runs txt], ...}
-                # Where the list of txts per network is ordered by run
+                # Build a {'timeseries': [path to timeseries runs txt], ...}
+                # Where the list of txts per timeseries is ordered by run
                 files_fmri = {}
-                for network in self.fmri_networks:
-                    # Assuming network name is start of filename
-                    out = glob(str(path_fmri / Path(f'{network}_*')))
-                    files_fmri[network] = sorted(out, key=self._sort)
+                for timeseries in self.fmri_timeseries:
+                    # Assuming timeseries name is start of filename
+                    all_files = glob(str(path_fmri / Path('*')))
+                    out = []
+                    for x in all_files:
+                        if timeseries in x:
+                            out.append(x)
+                    #out = [x for x in all_files if timeseries in x]
+                    #out = glob(str(path_fmri / Path(f'{timeseries}_*')))
+                    files_fmri[timeseries] = sorted(out, key=self._sort)
                     
                 # Check for missing data files
                 if not files_eeg or not all([x for x in files_fmri]):
@@ -172,7 +179,8 @@ class Reformat:
                     self._update_log(message)
                     continue
                     
-                # Check for inconsistent number of runs across networks / eeg data 
+                # Check for inconsistent number of runs across timeseries / eeg data 
+                embed()
                 fmri_lens = [len(x) for x in files_fmri.values()]
                 if not all([fmri_lens[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
                     message = ("Number of files detected for EEG not equal to "
@@ -189,7 +197,7 @@ class Reformat:
                 for run, (file_eeg, file_fmri) in enumerate(zip(files_eeg, zip(*files_fmri.values())), start=1):
                     # - file_eeg is the (string) path to the EEG .set file for the current run
                     # - file_fmri is a tuple of (string) paths to the txt 
-                    #    data for each network in the current run
+                    #    data for each timeseries in the current run
 
                     run = 'run-' + str(run).zfill(3)
                     print('\n')
@@ -204,18 +212,18 @@ class Reformat:
                     if X is None:
                         continue
 
-                    # Convert fmri files for each network to a dict with:
-                    # {'network1': np.array, 'network2': ...}
+                    # Convert fmri files for each timeseries to a dict with:
+                    # {'timeseries1': np.array, 'timeseries2': ...}
                     # see _process_fmri function below
-                    y = self._process_fmri(file_fmri, self.fmri_networks)
+                    y = self._process_fmri(file_fmri, self.fmri_timeseries)
 
                     # Ensure fmri data have same observation count
                     if not all([len(x) == len(list(y.values())[0]) for x in y.values()]):
                         message = ("Number of observations across fmri "
-                                   "networks is not equal to one another.\n"
+                                   "timseries is not equal to one another.\n"
                                    f"Subject: {subject}, Session: {session}, Run: {run}\n")
-                        for network in y:
-                            message += f'{network}: {len(y[network])}\n'
+                        for timeseries in y:
+                            message += f'{timeseries}: {len(y[timeseries])}\n'
                         message += "Skipping run"
                         print(message + '\n')
                         self._update_log(message)
@@ -232,13 +240,13 @@ class Reformat:
                         continue
 
                     # Save TR marker
-                    trs = np.arange(self.num_lags, y[self.fmri_networks[0]].shape[0]+self.num_lags)
-                    assert(len(trs) == len(y[self.fmri_networks[0]]))
+                    trs = np.arange(self.num_lags, y[self.fmri_timeseries[0]].shape[0]+self.num_lags)
+                    assert(len(trs) == len(y[self.fmri_timeseries[0]]))
 
                     # -- DROP NANS -- #
                     
                     # Mask nans in fMRI data and drop in EEG
-                    mask = ~np.isnan(y[self.fmri_networks[0]])
+                    mask = ~np.isnan(y[self.fmri_timeseries[0]])
                     X = X[mask, :]
                     y = {k: y[k][mask] for k in y}
                     trs = trs[mask]
@@ -366,15 +374,15 @@ class Reformat:
         return ar_reshape
 
 
-    def _process_fmri(self, files, network_names):
+    def _process_fmri(self, files, timeseries_names):
         '''
-        Input is tuple of paths to each network for one run
+        Input is tuple of paths to each timeseries for one run
         Return dict of np.array, chopping off the correct lag numbers
         '''
         out = {}
         num_lags = self.num_lags
 
-        for file, name in zip(files, network_names):
+        for file, name in zip(files, timeseries_names):
 
             with open(file, 'r') as f:
                 d = f.readlines()
@@ -389,30 +397,30 @@ class Reformat:
     def _align_observations(self, X, y):
 
         # If already aligned, return
-        if X.shape[0] == len(y[self.fmri_networks[0]]):
+        if X.shape[0] == len(y[self.fmri_timeseries[0]]):
             return X, y
 
         # The most general case: Extra marker in EEG data for ES runs
-        eeg_extra = X.shape[0] - len(y[self.fmri_networks[0]])
+        eeg_extra = X.shape[0] - len(y[self.fmri_timeseries[0]])
         if eeg_extra in [1, 2]:
             # Chop an EEG TR off and return
             X = X[:-eeg_extra, :]
-            assert(X.shape[0] == len(y[self.fmri_networks[0]]))
+            assert(X.shape[0] == len(y[self.fmri_timeseries[0]]))
             return X, y
 
         # If EEG obs are short by 1 or 2, chop off fMRI to align
-        fmri_extra =  len(y[self.fmri_networks[0]]) - X.shape[0]
+        fmri_extra =  len(y[self.fmri_timeseries[0]]) - X.shape[0]
         if fmri_extra in [1, 2]:
             y = {x: y[x][:-fmri_extra] for x in y}
-            assert(X.shape[0] == len(y[self.fmri_networks[0]]))
+            assert(X.shape[0] == len(y[self.fmri_timeseries[0]]))
             return X, y
 
         # If obs are still not equal, log and skip run
-        if X.shape[0] != len(y[self.fmri_networks[0]]):
+        if X.shape[0] != len(y[self.fmri_timeseries[0]]):
             message = (f"Unequal observations for {self.subject} "
                        f"{self.session} {self.run}, X: {X.shape[0]}, ")
-            for network in y:
-                message += f'{network}: {len(y[network])}, '
+            for timeseries in y:
+                message += f'{timeseries}: {len(y[timeseries])}, '
             message += 'Skipping run.'
             print(message + '\n')
             self._update_log(message)
@@ -475,8 +483,13 @@ class Reformat:
         Sort by bld\d\d\d 
         or run-\d\d\d
         '''
-        pattern = r'(?:run-|bld)(\d+)_'
-        m = int(re.search(pattern, run).group(1))
+        pattern = r'(?:run-|bld)(\d+)[_\.]'
+        try:
+            m = int(re.search(pattern, run).group(1))
+        except Exception as e:
+            print(f'\nSorting fmri files failed on file {run}')
+            print(e)
+            sys.exit(1)
         return m
 
 # This tells Python to execute the below if this script is called directly
@@ -489,8 +502,6 @@ if __name__ == '__main__':
         (relative to repo root)
     '''
 
-    # fmri networks
-    fmri_networks = ['dATNa', 'dATNb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
 
     # Prompt user for overwrite arg
     valid_response = False
@@ -520,10 +531,23 @@ if __name__ == '__main__':
         else:
             out_path = in_path / Path('../formatted/full')
 
+    # --- IMPORT FMRI TIMESERIES KEYS HERE --- # 
+    # (pipeline assumes each timeseries will have equal runs)
+    fmri_timeseries_path = here() / Path('analysis/scripts/modules/preprocessing/01-format_data_config.txt')
+    if not os.path.exists(fmri_timeseries_path):
+        raise RuntimeError('Must create a config file of timeseries keys in '
+        'preprocessing directory prior to running this script named: '
+        '01-format_data_config.txt\n'
+        'See example 01-format_data_config_example.txt')
+
+    with open(fmri_timeseries_path, 'rb') as file:
+        fmri_timeseries = file.read().splitlines()
+    if type(fmri_timeseries[0]) is bytes:
+        fmri_timeseries = [x.decode('utf-8') for x in fmri_timeseries]
 
 
     # Initialize and run reformatting
-    reformat = Reformat(fmri_networks=fmri_networks, in_path=in_path,
+    reformat = Reformat(fmri_timeseries=fmri_timeseries, in_path=in_path,
                         out_path=out_path, overwrite=overwrite)
     reformat.run()
 
