@@ -19,64 +19,84 @@ from IPython import embed
 
 class Reformat:
     """
-    Reformat EEG and fMRI data into structured arrays suitable for analysis.
+    Reformat EEG and fMRI data into structured arrays suitable for modeling and analysis.
 
-    This class processes EEG and fMRI datasets for a list of subjects, organizes 
-    the data by session and run, computes time-lagged features for EEG, and aligns 
-    them with fMRI network data. The processed data is saved as pickle files.
+    This class processes multimodal EEG and fMRI datasets for multiple subjects,
+    aligning the modalities across sessions and runs. It computes time–frequency
+    EEG features using Morlet wavelets, applies time lags, and synchronizes them
+    with network-level fMRI signals. The results are organized into nested
+    dictionaries and serialized as pickle files for downstream modeling.
 
     Parameters
     ----------
-    subjects : list of str
-        List of subject identifiers to process.
-    n_lags : int
-        Number of lags to include for EEG time series (including lag 0).
     in_path : pathlib.Path
-        Path to the root input directory containing subject/session data.
+        Path to the root directory containing raw subject/session data.
     out_path : pathlib.Path
-        Path to the directory where processed data will be saved.
+        Path to the directory where processed data and frequency files will be saved.
+    fmri_networks : list of str
+        List of fMRI network names to extract (e.g., ['DANa', 'DANb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']).
+    n_lags : int, default=11
+        Number of time lags to include for EEG features (including lag 0).
     overwrite : bool, default=False
-        If True, previously processed subject files will be overwritten.
+        If True, reprocess and overwrite any previously formatted subject data.
     n_freq : int, default=40
-        Number of frequency bins to use for EEG time-frequency analysis.
+        Number of frequency bins for EEG time–frequency decomposition.
+
+    Attributes
+    ----------
+    subjects : list of str
+        Subject identifiers automatically inferred from `in_path` using the pattern 'sub[-_][0-9]*'.
+    completed : list of str
+        Subjects already processed (based on existing output files).
+    freqs : np.ndarray
+        Array of frequencies used for Morlet decomposition (written to `../freqs.txt` after processing).
+    time : str
+        Timestamp for the current processing session, used in log file names.
 
     Methods
     -------
     run()
-        Process all subjects, sessions, and runs, performing EEG and fMRI 
-        preprocessing and saving the results.
-    _write_data(d)
-        Saves processed data dictionary `d` to a pickle file.
-    _sort(run)
-        Returns the integer run index from a filename for sorting purposes.
+        Iterates over subjects, sessions, and runs; processes EEG and fMRI data,
+        aligns them, and saves structured outputs.
     _process_eeg(file_eeg)
-        Loads EEG data, computes time-frequency power, applies lags, and 
-        returns a reshaped array of shape (timepoints, channels*freqs*lags).
+        Loads and preprocesses EEG data: computes time–frequency power, normalizes,
+        filters, downsamples to TRs, applies time lags, and reshapes features.
     _process_fmri(files, network_names)
-        Loads fMRI network data from files, trims initial lags, and returns a 
-        dictionary mapping network names to numpy arrays.
-    _update_log(message)
-        Writes or appends a log message to a timestamped log file.
+        Loads and trims fMRI network signals, removing initial volumes to match
+        EEG lag structure.
+    _write_data(d)
+        Saves the processed subject dictionary to a pickle file in `out_path`.
+    _sort(run)
+        Extracts the integer run index from a filename (supports both 'run-' and 'bld' patterns).
     _get_metainfo(file)
-        Extracts subject, session, and run identifiers from a file path.
+        Extracts subject, session, and run identifiers from a file path string.
+    _update_log(message)
+        Writes a timestamped message to a log file under
+        `analysis/scripts/modules/preprocessing/logs`.
 
     Notes
     -----
-    - Assumes EEG data is in EEGLAB `.set` format.
-    - Assumes fMRI data is stored as text files with one observation per line, 
-      and that filenames start with the network name.
-    - The number of EEG timepoints (after lags) must match the number of fMRI 
-      observations; otherwise, the run is skipped.
-    - Currently hardcoded fMRI networks:'DANa', 'DANb', 'DNa', 
-      'DNb', 'SAL', 'FPCNa', 'FPCNb'.
-      - Script assumes fmri files are named [NETWORK]_*.txt
+    - EEG data are assumed to be in EEGLAB `.set` format with TR markers labeled 'T  1'.
+    - fMRI data are assumed to be plain-text files where filenames begin with
+      a network name (e.g., 'DANa_run-001.txt'), and each line corresponds to
+      one observation.
+    - Each subject directory should follow the structure:
+        sub-XXX/ses-001/{eeg,func}/
+        sub-XXX/ses-002/{eeg,func}/
+    - The number of EEG and fMRI runs per session must be consistent; mismatches
+      trigger log messages and are skipped.
+    - Output format:
+        {session: {run: {'X': EEG_features, 'y': {network: fMRI_signal}}}}
+    - The file `freqs.txt` is saved one directory above `out_path` and contains
+      the frequency bins used for EEG decomposition.
     """
 
-    def __init__(self, n_lags, in_path, out_path, overwrite=False, n_freq=40):
+    def __init__(self,  in_path, out_path, fmri_networks, freq_space='log', 
+                 n_lags=11, overwrite=False, n_freq=40):
 
 
         # Infer subject numbers
-        subjects = sorted([Path(x).name for x in glob(str(in_path / Path('*'))) if 'sub' in x])
+        subjects = sorted([Path(x).name for x in glob(str(in_path / Path('sub[-_][0-9]*')))])
         if not subjects and in_path != Path('analysis/data/original'):
             raise RuntimeError('Could not find data at default location '
                                '(analysis/data/original). Please specify '
@@ -88,6 +108,13 @@ class Reformat:
                                'labeled within data path as "sub-\d\d\d" ')
 
         # Initializing class-level variables
+        if freq_space == 'linear':
+            freqs = np.linspace(1, 40, 40)
+        elif freq_space == 'log':
+            freqs = np.logspace(np.log10(1), np.log10(40), 40)
+        else:
+            raise ValueError('freq_space must be either "linear" or "log"')
+        self.freqs = freqs
         self.subjects = subjects
         now = datetime.now()
         self.time = now.strftime('%Y%m%d%H%M%S')
@@ -95,13 +122,11 @@ class Reformat:
         self.out_path = out_path
         self.num_lags = n_lags
         self.n_freq = n_freq
+        self.fmri_networks = fmri_networks
         self.out_path.mkdir(parents=True, exist_ok=True)
         completed = glob(str(self.out_path / Path('sub')) + '*')
         self.completed = [Path(x).stem for x in completed]
         self.overwrite = overwrite
-
-        # Hardcode fmri networks
-        self.fmri_networks = ['dATNa', 'dATNb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
 
 
     def run(self):
@@ -196,57 +221,47 @@ class Reformat:
                         self._update_log(message)
                         continue
 
+                    # Handle observation alignment
+                    self.subject = subject
+                    self.session = session
+                    self.run = run
+                    X, y = self._align_observations(X, y)
 
-                    # Try chopping off last TR in EEG if it makes obs equal
-                    # with fMRI
-                    if X[:-1, :].shape[0] == len(y[self.fmri_networks[0]]):
-                        X = X[:-1, :]
-
-                    # Validate equal observations across X and y
-                    if X.shape[0] != len(y[self.fmri_networks[0]]):
-                        message = (f"Unequal observations for {subject} "
-                                   f"{session} {run}, X: {X.shape[0]}, ")
-                        for network in y:
-                            message += f'{network}: {len(y[network])}, '
-                        message += 'Skipping run.'
-                        print(message + '\n')
-                        self._update_log(message)
+                    # If observations are misaligned
+                    if X is None:
                         continue
 
+                    # Save TR marker
+                    trs = np.arange(self.num_lags, y[self.fmri_networks[0]].shape[0]+self.num_lags)
+                    assert(len(trs) == len(y[self.fmri_networks[0]]))
 
                     # -- DROP NANS -- #
-                    # Should add validation to check that all nans in fMRI
-                    # are at same obs
                     
                     # Mask nans in fMRI data and drop in EEG
                     mask = ~np.isnan(y[self.fmri_networks[0]])
                     X = X[mask, :]
                     y = {k: y[k][mask] for k in y}
+                    trs = trs[mask]
 
-                    d[session][run] = {'X': X, 'y': y}
+                    d[session][run] = {'X': X, 'y': y, 'trs': trs}
 
             self.subject = subject
             self._write_data(d)
 
 
+        # Write out frequencies
+        # Frequencies will get stored in ./formatted
+        out_file = self.out_path / Path('../freqs.txt')
+        with open(out_file, 'w') as file:
+            file.write('\n'.join([str(x) for x in self.freqs]))
 
-    def _write_data(self, d):
-        if not os.path.exists(self.out_path):
-            os.makedirs(self.out_path)
-
-        out_file = self.out_path / Path(self.subject + '.pkl')
-        with open(out_file, 'wb') as file:
-            pickle.dump(d, file)
+        # Write out number of lags
+        out_file = self.out_path / Path('../num_lags.txt')
+        with open(out_file, 'w') as file:
+            file.write(str(self.num_lags))
 
 
-    def _sort(self, run):
-        '''
-        Sort by bld\d\d\d 
-        or run-\d\d\d
-        '''
-        pattern = r'(?:run-|bld)(\d+)_'
-        m = int(re.search(pattern, run).group(1))
-        return m
+
 
     def _process_eeg(self, file_eeg):
         """
@@ -300,8 +315,7 @@ class Reformat:
 
         # OBTAIN TIME-FREQUENCY DATA
         # Set params
-        freqs = np.logspace(0, np.log10(40), 40)
-        n_cycles = freqs / 2
+        n_cycles = self.freqs / 2
         njobs = int(os.cpu_count() - 1)
         sfreq = raw.info['sfreq']
 
@@ -310,7 +324,7 @@ class Reformat:
                 # Adds a bogus new dimension because the function needs an epoch
                 raw.get_data()[np.newaxis, :, :], 
                 sfreq=sfreq,
-                freqs = freqs,
+                freqs = self.freqs,
                 n_cycles=n_cycles,
                 n_jobs=njobs,
                 output='power')[0]
@@ -352,6 +366,59 @@ class Reformat:
         return ar_reshape
 
 
+    def _process_fmri(self, files, network_names):
+        '''
+        Input is tuple of paths to each network for one run
+        Return dict of np.array, chopping off the correct lag numbers
+        '''
+        out = {}
+        num_lags = self.num_lags
+
+        for file, name in zip(files, network_names):
+
+            with open(file, 'r') as f:
+                d = f.readlines()
+
+            # Chop off first k observations
+            d = np.array([float(x.strip()) for x in d])[(num_lags-1):]
+
+            out[name] = d
+
+        return out
+
+    def _align_observations(self, X, y):
+
+        # If already aligned, return
+        if X.shape[0] == len(y[self.fmri_networks[0]]):
+            return X, y
+
+        # The most general case: Extra marker in EEG data for ES runs
+        eeg_extra = X.shape[0] - len(y[self.fmri_networks[0]])
+        if eeg_extra in [1, 2]:
+            # Chop an EEG TR off and return
+            X = X[:-eeg_extra, :]
+            assert(X.shape[0] == len(y[self.fmri_networks[0]]))
+            return X, y
+
+        # If EEG obs are short by 1 or 2, chop off fMRI to align
+        fmri_extra =  len(y[self.fmri_networks[0]]) - X.shape[0]
+        if fmri_extra in [1, 2]:
+            y = {x: y[x][:-fmri_extra] for x in y}
+            assert(X.shape[0] == len(y[self.fmri_networks[0]]))
+            return X, y
+
+        # If obs are still not equal, log and skip run
+        if X.shape[0] != len(y[self.fmri_networks[0]]):
+            message = (f"Unequal observations for {self.subject} "
+                       f"{self.session} {self.run}, X: {X.shape[0]}, ")
+            for network in y:
+                message += f'{network}: {len(y[network])}, '
+            message += 'Skipping run.'
+            print(message + '\n')
+            self._update_log(message)
+
+            return None, None
+
 
     def _update_log(self, message):
         # Either create or update log with message
@@ -392,39 +459,38 @@ class Reformat:
 
         return {'subject': subject, 'session': session, 'run': run}
 
-    def _process_fmri(self, files, network_names):
+
+    def _write_data(self, d):
+        if not os.path.exists(self.out_path):
+            os.makedirs(self.out_path)
+
+        out_file = self.out_path / Path(self.subject + '.pkl')
+        with open(out_file, 'wb') as file:
+            pickle.dump(d, file)
+
+
+
+    def _sort(self, run):
         '''
-        Input is tuple of paths to each network for one run
-        Return dict of np.array, chopping off the correct lag numbers
+        Sort by bld\d\d\d 
+        or run-\d\d\d
         '''
-        out = {}
-        num_lags = self.num_lags
+        pattern = r'(?:run-|bld)(\d+)_'
+        m = int(re.search(pattern, run).group(1))
+        return m
 
-        for file, name in zip(files, network_names):
-
-            with open(file, 'r') as f:
-                d = f.readlines()
-
-            # Chop off first k observations
-            d = np.array([float(x.strip()) for x in d])[(num_lags-1):]
-
-            out[name] = d
-
-        return out
-
-
+# This tells Python to execute the below if this script is called directly
+# from the command line
 if __name__ == '__main__':
-    
     '''
-    THIS IS WHERE IT STARTS RUNNING WHEN YOU FIRST CALL THE SCRIPT
-    Here I'm doing basic input argument parsing and calling the functions
-    above
+    Usage: python 01-format_data.py path/to/input_data path/to/output
+        specifying paths is optional
+        if not specified, it will look in ./analysis/data/original
+        (relative to repo root)
     '''
 
-    # This controls how many lags the formatted data has
-    # includes lag 0, so (eg) n_lags=11 means current TR plus the ten
-    # previous
-    n_lags=11
+    # fmri networks
+    fmri_networks = ['dATNa', 'dATNb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']
 
     # Prompt user for overwrite arg
     valid_response = False
@@ -446,7 +512,7 @@ if __name__ == '__main__':
         # Change WD to project root only if user hasn't specified paths
         os.chdir(here())
         sys.path.append(str(here()))
-
+ 
     else:
         in_path = Path(args[0])
         if len(args) > 1:
@@ -457,7 +523,7 @@ if __name__ == '__main__':
 
 
     # Initialize and run reformatting
-    reformat = Reformat(n_lags=n_lags, in_path=in_path,
+    reformat = Reformat(fmri_networks=fmri_networks, in_path=in_path,
                         out_path=out_path, overwrite=overwrite)
     reformat.run()
 

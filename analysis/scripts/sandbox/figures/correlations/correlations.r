@@ -1,0 +1,168 @@
+# --- MAKE ALL CORRELATION VISUALIZATIONS --- #
+# --- scripts/sandbox/correlations/correlations_long.csv needs to exist prior 
+# ---- to running this script
+# --- (this script is very RAM intensive)
+
+
+# --- LIBRARIES --- #
+rm(list=ls())
+library(arrow)
+library(ggridges)
+library(tidyverse)
+library(eegUtils)
+library(glue)
+library(data.table)
+library(ggpubr)
+library(here)
+library(fs)
+library(psych)
+library(scales)
+library(RColorBrewer)
+library(reticulate)
+setwd(path(here()))
+root <- path('analysis/scripts/sandbox/figures/correlations')
+source(path(root, 'cor_viz_helpers/heat_maps/plot_heat_maps.r')) # plot_heat()
+source(path(root, 'cor_viz_helpers/topos/plot_topos.r')) # plot_topo()
+source(path(root, 'cor_viz_helpers/inter_session/plot_inter_session.r')) # plot_inter_session()
+source(path(root, 'cor_viz_helpers/significance/plot_significance.r')) # plot_significance()
+text <- 16
+size <- 16
+
+fig_save_root <- path('~/Dropbox/post_doc/professional/meeting_notes/lab/2025-10-23')
+
+# --- Parse user given data directory if supplied --- #
+args <- commandArgs(trailingOnly=TRUE)
+
+if (length(args) == 0) {
+    data_root <- path('analysis/data/original')
+} else {
+    data_root <- path(args[1])
+}
+
+# Import data
+if (file.exists(path(data_root, '../correlation_data/correlations_long.feather'))) {
+    d_run <- read_feather(path(data_root, '../correlation_data/correlations_long.feather'))
+} else {
+    stop('correlations_long.csv is missing. First run 01-format_data.py, then run 03-make_flat_data.py, 
+         then run 04-compute_correlations.r')
+}
+
+# --- PRELIMS ---#
+
+# Get channel coordinates from Python
+use_condaenv('eeg-fmri')
+py_run_string("
+from analysis.scripts.modules.preprocessing.eeg_utils import get_channel_coordinates
+import mne
+data_root = r.data_root
+raw = mne.io.read_raw_eeglab(f'{data_root}/sub-001/ses-001/eeg/sub-001_ses-001_bld001_eeg_Bergen_CWreg_filt_ICA_rej.set')
+ch_names = raw.info['ch_names']
+ch_pos = get_channel_coordinates(ch_names)
+")
+ch_pos <- py$ch_pos
+ch_names <- py$ch_names
+
+# Adjust the lag var to (s)
+d_run <- d_run %>% 
+    mutate(lag = lag * 2)
+
+d <- d_run %>% 
+    group_by(subject, channel, frequency, lag, network) %>% 
+    summarize(cors = mean(cors))
+
+
+
+# ========================================= # 
+
+
+# --- GENERATE PLOTS --- #
+
+# - DNa through DAN heat over topo - #
+
+networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb')
+
+p1 <- plot_heat(d, networks, axis_text = 12)
+
+ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
+       width = 1920, height = 1080, units = 'px', dpi = 150)
+
+
+bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
+p2 <- plot_topo(d, networks, bands)
+
+ggsave(plot=p2, file=path(fig_save_root, 'topos.png'), 
+       width = 1920, height = 1080, units = 'px', dpi = 150)
+
+g <- ggarrange(p1, p2, nrow=2)
+
+ggsave(plot=g, file=path(root, 'cor_viz_helpers/heat_maps/dna_through_dan.png'), 
+       height = 10, width = 10, units = 'in', dpi = 300)
+
+# - FPN A and B - #
+
+# Heat maps across full lags
+p1 <- plot_heat(c('FPNa', 'FPNb'))
+ggsave(plot = p1, file=path(root, 'figures/heat_maps/FPNa_FPNb_heat.png'),
+       height = 6, width = 10, units = 'in', dpi = 300)
+
+# Heat maps with significance to 10 s lags
+#networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
+bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
+p <- plot_significance(d, networks, bands, label_middle=FALSE, axis_text = 12)
+    
+ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
+       width = 1920, height = 980, units = 'px', dpi = 150)
+
+
+# - Inter session plot - #
+
+p <- plot_inter_session(d_run, networks, bands, label_middle=FALSE, 
+                        return_icc = FALSE, axis_text = 12, overall_text=16)
+
+ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
+       width = 1920, height = 980, units = 'px', dpi = 150)
+
+
+# - By task plots - #
+
+d_task <- read_feather(path(data_root, '../correlation_data/correlations_long_bytask.feather'))
+# Adjust lag to seconds
+d_task$lag <- d_task$lag * 2
+p <- plot_by_task(d_task, networks, bands)
+
+
+ggsave(plot=p, file=path(fig_save_root, 'by_task.png'),
+       width = 1920, height = 980, units = 'px', dpi = 150)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ggsave(plot=p, file=path(root, 'temp.png'), width = 1920, height = 1080, units = 'px', dpi = 150)
+

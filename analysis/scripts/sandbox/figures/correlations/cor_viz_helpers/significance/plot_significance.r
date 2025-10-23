@@ -1,0 +1,116 @@
+# -- FREQ X LAG WITH SIGNIFICANCE -- #
+
+plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
+                              overall_text=25, axis_text=18, legend_text=16) {
+    #' Plot Frequency–Lag Heatmap with Significance Markers
+    #'
+    #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
+    #' for specified networks, highlighting statistically significant effects (FDR-corrected p < .05).
+    #'
+    #' @param d A data frame containing columns `subject`, `frequency`, `lag`, `network`, and `cors`.
+    #' @param networks A character vector of network names to include in the plot.
+    #' @param bands A character vector of frequency bands to plot (e.g., "delta", "theta", "alpha", "beta", "gamma").
+    #' @param scales Optional numeric vector `c(min, max)` to fix the color scale limits. Defaults to automatic scaling.
+    #' @param label_middle Logical; if `TRUE`, labels the color scale at zero. Default is `TRUE`.
+    #' @param overall_text Numeric, base font size for all text. Default is 25.
+    #' @param axis_text Numeric, font size for axis labels. Default is 18.
+    #' @param legend.text Numeric, font size for legend text. Default is 16.
+    #'
+    #' @return A `ggplot` object representing the faceted heatmap, with gold markers indicating significant bins.
+    #'
+    #' @details
+    #' - Frequencies are binned into standard EEG bands: Delta, Theta, Alpha, Beta, Gamma.
+    #' - Within each network and lag, one-sample t-tests test whether mean `cors` differs from zero.
+    #' - p-values are adjusted for multiple comparisons using the FDR method.
+    #' - Gold asterisks indicate significant bins (FDR-adjusted p < .05).
+    #'
+    #' @examples
+    #' plot_significance(df, networks = c("DMN", "DAN"), bands = c("alpha", "beta"))
+    
+    
+	# Get frequency bands
+	breaks <- c(0, 1, 4, 8, 12, 30, 40)
+	labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
+	labels_simple <- tolower(labels[2:(length(labels))])
+	bins <- levels(cut(d$frequency, breaks=breaks))
+	labels <- paste(labels, bins, sep=' ')
+	
+	# Determine which bands to grab
+	bands <- tolower(bands)
+	if (!all(bands %in% labels_simple)) {
+	    stop(glue('Labels must be one of {paste(labels_simple, collapse = ", ")}'))
+	}
+	
+	bands_grab <- labels[2:(length(labels))][which(labels_simple %in% bands)]
+	
+	# Generate significance markers
+	ps <- d %>% 
+		mutate(bin = cut(frequency, breaks, labels)) %>% 
+		filter(bin %in% bands_grab, lag <= 10,
+			   network %in% !!networks) %>% 
+		group_by(subject, lag, network, bin) %>% 
+		summarize(cors = mean(cors)) %>% 
+		group_by(lag, network, bin) %>% 
+		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
+	    group_by(network) %>% 
+		mutate(p_adj = p.adjust(p, method='fdr'),
+			   network = factor(network, levels = !!networks)) %>% 
+		filter(p_adj < .05) 
+		
+	# Generate averages to show in heat map
+	pd <- d %>% 
+		mutate(bin = cut(frequency, breaks, labels)) %>% 
+		filter(bin %in% bands_grab, lag <= 10,
+			   network %in% !!networks) %>% 
+		group_by(bin, lag, network) %>% 
+		summarize(cors = mean(cors)) %>% 
+		mutate(network = factor(network, levels = networks))
+	
+	# Determine scales
+	if (!is.na(scales)) {
+	    small <- floor(scales[1] * 100) / 100
+	    big <- ceiling(scales[2] * 100) / 100
+	} else {
+    	small <- floor(min(pd$cors) * 100) / 100
+    	big <- ceiling(max(pd$cors) * 100) / 100
+	}
+	
+	# Whether to label the middle of scale
+    if (label_middle) {
+		sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+							 values = rescale(c(small, 0, big)),
+							 breaks = c(small, 0, big),
+							 limits = c(small, big))  
+    } else {
+		sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+							 values = rescale(c(small, 0, big)),
+							 breaks = c(small, big),
+							 limits = c(small, big))  
+    }
+
+	# Generate plot
+	p <- pd %>%     
+		ggplot(aes(x = bin, y = lag)) + 
+		geom_tile(aes(fill = cors)) + 
+		geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 3) + 
+		facet_wrap(~network, nrow=1) + 
+		scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) +
+		labs(
+			x = 'Frequency bin',
+			y = 'Lag (s)',
+			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
+		) + 
+	    sfg + 
+		theme_bw() + 
+		theme(strip.background = element_rect(fill = NA),
+			  axis.ticks = element_blank(),
+			  panel.grid = element_blank(),
+			  legend.position = 'bottom',
+			  text = element_text(size = overall_text),
+			  axis.text = element_text(size = axis_text),
+			  axis.text.x = element_text(angle = 45, hjust=1),
+			  legend.text = element_text(size = legend_text, angle = 45, hjust=1),
+			  legend.title = element_text(margin = margin(r = 30)))
+		
+	return (p)
+}
