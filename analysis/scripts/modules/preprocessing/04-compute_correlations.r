@@ -61,7 +61,7 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
     }
 
     # Increase globals size to avoid serialization errors
-    options(future.globals.maxSize = 8 * 1024^3) # 8 GB
+    options(future.globals.maxSize = 16 * 1024^3) # 8 GB
     
     print('Computing correlations...')
 
@@ -72,7 +72,7 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
         cor_mat <- cor(eeg_mat, fmri_mat, method = 'spearman')
         formatted <- format_cors(cor_mat, rid, by_task = by_task)
         write_feather(formatted, path(script_root, glue('cache/{rid}.feather')))
-        NULL
+        'Worker completed successfully'
     }, future.seed = FALSE)
 
 }
