@@ -20,79 +20,98 @@ from IPython import embed
 class Reformat:
 
     """
-    Reformat EEG and fMRI data into structured arrays suitable for modeling and analysis.
+    Extract and align EEG and fMRI features for multimodal modeling.
 
-    This class processes multimodal EEG and fMRI datasets for multiple subjects,
-    aligning the modalities across sessions and runs. It computes time–frequency
-    EEG features using Morlet wavelets, applies time lags, and synchronizes them
-    with network-level fMRI signals. The results are organized into nested
-    dictionaries and serialized as pickle files for downstream modeling.
+    This class preprocesses raw EEG and fMRI data for multiple subjects,
+    generating structured arrays suitable for statistical or machine learning
+    models. It performs time–frequency decomposition of EEG signals using
+    Morlet wavelets, applies temporal lags, aligns them with fMRI network
+    time series, and serializes the results into compact per-subject
+    pickle files.
+
+    The output for each subject is a nested dictionary indexed by session
+    and run, containing time-lagged EEG feature matrices, synchronized fMRI
+    response arrays, and TR indices. Frequencies used for the EEG
+    decomposition and the number of time lags are saved to text files for
+    downstream reference.
 
     Parameters
     ----------
     in_path : pathlib.Path
-        Path to the root directory containing raw subject/session data.
+        Root directory containing raw subject/session data.
+        Each subject directory must follow the pattern:
+        `sub-XXX/ses-001/{eeg,func}/` and `sub-XXX/ses-002/{eeg,func}/`.
     out_path : pathlib.Path
-        Path to the directory where processed data and frequency files will be saved.
-    fmri_networks : list of str
-        List of fMRI network names to extract (e.g., ['DANa', 'DANb', 'DNa', 'DNb', 'SAL', 'FPCNa', 'FPCNb']).
+        Directory where processed data and frequency files will be written.
+    fmri_timeseries : list of str
+        List of network or ROI names corresponding to text files within
+        each session’s `func/general` folder (e.g., ['DANa', 'DANb', 'DNa', 'DNb']).
+    freq_space : {'linear', 'log'}, default='linear'
+        Frequency scaling used to define the Morlet frequency bins.
+        'linear' produces evenly spaced frequencies from 1–40 Hz;
+        'log' produces logarithmically spaced bins.
     n_lags : int, default=11
         Number of time lags to include for EEG features (including lag 0).
     overwrite : bool, default=False
-        If True, reprocess and overwrite any previously formatted subject data.
+        If True, reprocess and overwrite existing formatted subject data.
     n_freq : int, default=40
         Number of frequency bins for EEG time–frequency decomposition.
 
     Attributes
     ----------
     subjects : list of str
-        Subject identifiers automatically inferred from `in_path` using the pattern 'sub[-_][0-9]*'.
+        Subject identifiers inferred from `in_path` (pattern: 'sub[-_][0-9]*').
     completed : list of str
-        Subjects already processed (based on existing output files).
+        Subjects already processed (based on existing `.pkl` output files).
     freqs : np.ndarray
-        Array of frequencies used for Morlet decomposition (written to `../freqs.txt` after processing).
+        Frequency bins used for EEG time–frequency decomposition.
     time : str
-        Timestamp for the current processing session, used in log file names.
+        Timestamp string (YYYYMMDDHHMMSS) used in log file naming.
+    num_lags : int
+        Number of lags applied to EEG features.
+    fmri_timeseries : list of str
+        Names of the fMRI time series included in the output dictionary.
 
     Methods
     -------
     run()
-        Iterates over subjects, sessions, and runs; processes EEG and fMRI data,
-        aligns them, and saves structured outputs.
+        Main entry point. Iterates through subjects, sessions, and runs;
+        processes EEG and fMRI data, aligns them, and writes structured outputs.
     _process_eeg(file_eeg)
-        Loads and preprocesses EEG data: computes time–frequency power, normalizes,
-        filters, downsamples to TRs, applies time lags, and reshapes features.
-    _process_fmri(files, network_names)
-        Loads and trims fMRI network signals, removing initial volumes to match
-        EEG lag structure.
+        Loads a single EEGLAB `.set` file, computes time–frequency power using
+        Morlet wavelets, normalizes, low-pass filters, downsamples to TR markers,
+        and constructs a time-lagged feature array.
+    _process_fmri(files, timeseries_names)
+        Loads plain-text fMRI time series, trims the first `n_lags-1` TRs, and
+        returns a dictionary of aligned arrays for each network or ROI.
+    _align_observations(X, y)
+        Ensures EEG and fMRI observations are aligned in time, trimming excess
+        samples if needed; logs and skips runs with large mismatches.
     _write_data(d)
-        Saves the processed subject dictionary to a pickle file in `out_path`.
-    _sort(run)
-        Extracts the integer run index from a filename (supports both 'run-' and 'bld' patterns).
+        Serializes a subject’s nested session/run dictionary to a pickle file
+        in `out_path`.
     _get_metainfo(file)
         Extracts subject, session, and run identifiers from a file path string.
     _update_log(message)
-        Writes a timestamped message to a log file under
-        `analysis/scripts/modules/preprocessing/logs`.
+        Appends timestamped log messages to
+        `analysis/scripts/modules/preprocessing/logs/<timestamp>_log.txt`.
+    _sort(run)
+        Helper for sorting run filenames using 'run-###' or 'bld###' patterns.
 
     Notes
     -----
-    - EEG data are assumed to be in EEGLAB `.set` format with TR markers labeled 'T  1'.
-    - fMRI data are assumed to be plain-text files where filenames begin with
-      a network name (e.g., 'DANa_run-001.txt'), and each line corresponds to
-      one observation.
-    - Each subject directory should follow the structure:
-        sub-XXX/ses-001/{eeg,func}/
-        sub-XXX/ses-002/{eeg,func}/
-    - The number of EEG and fMRI runs per session must be consistent; mismatches
-      trigger log messages and are skipped.
-    - Output format:
-        {session: {run: {'X': EEG_features, 'y': {network: fMRI_signal}}}}
-    - The file `freqs.txt` is saved one directory above `out_path` and contains
-      the frequency bins used for EEG decomposition.
+    - EEG data must be in EEGLAB `.set` format with TR events labeled 'T  1'.
+    - fMRI network files must be plain-text `.txt` files where each line
+      corresponds to one TR, and filenames begin with the network name.
+    - Skips runs with mismatched run counts or missing data across modalities.
+    - The final nested output has the structure:
+          {session: {run: {'X': EEG_features, 'y': fMRI_dict, 'trs': np.ndarray}}}
+    - Frequencies and lag parameters are also saved to:
+          ../freqs.txt
+          ../num_lags.txt
     """
 
-    def __init__(self,  in_path, out_path, fmri_timeseries, freq_space='log', 
+    def __init__(self,  in_path, out_path, fmri_timeseries, freq_space='linear', 
                  n_lags=11, overwrite=False, n_freq=40):
 
 

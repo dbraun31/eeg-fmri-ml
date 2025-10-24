@@ -48,7 +48,7 @@ parse_run <- function(combo, data_root) {
         mutate(condition = case_when(
             is.nan(TP_fmri) & is.nan(rest_fmri) ~ 'head_motion',
             is.nan(TP_fmri) & !is.nan(rest_fmri) ~ 'rest',
-            !is.nan(TP_fmri) & is.nan(rest_fmri) ~ 'thought_probe',
+            !is.nan(TP_fmri) & is.nan(rest_fmri) ~ 'tp',
             .default = '-99'
         )) %>% 
         select(-TP_fmri, -rest_fmri) 

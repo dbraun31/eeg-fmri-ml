@@ -19,7 +19,7 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
     
     p <- pd %>% 
         ggplot(aes(x = frequency, y = lag)) + 
-        geom_raster(aes(fill = cors), interpolate = TRUE) + 
+        geom_tile(aes(fill = cors)) + 
         facet_grid(task ~ network) + 
         labs(
             x = 'Frequency (Hz)',

@@ -1,3 +1,11 @@
+# CALCULATE ALL RUN-LEVEL CORRELATIONS
+# ------------------------------------ 
+# Usage: Rscript 04-compute_correlations path/to/data --bytask
+# Will compute correlations by task if you pass the --bytask flag
+# This script is very RAM intensive!
+
+
+
 # Import libraries
 rm(list=ls())
 library(tidyverse)
@@ -22,8 +30,9 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
     # Make / refresh cache dir
     if (dir.exists(path(script_root, 'cache'))) {
         dir_delete(path(script_root, 'cache'))
-        dir.create(path(script_root, 'cache'))
     }
+    
+    dir.create(path(script_root, 'cache'))
     
     # Identify EEG and fMRI columns
     first_eeg_col <- colnames(d)[which(grepl('^Fp1', colnames(d)))[1]]

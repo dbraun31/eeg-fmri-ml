@@ -1,7 +1,6 @@
 # --- MAKE ALL CORRELATION VISUALIZATIONS --- #
-# --- scripts/sandbox/correlations/correlations_long.csv needs to exist prior 
-# ---- to running this script
-# --- (this script is very RAM intensive)
+# --- correlations_long.feather needs to exist prior to running this script
+# --- (and possibly correlations_long_bytask.feather)
 
 
 # --- LIBRARIES --- #
@@ -26,10 +25,33 @@ source(path(root, 'cor_viz_helpers/by_task/by_task.r')) # plot_by_task()
 source(path(root, 'cor_viz_helpers/topos/plot_topos.r')) # plot_topo()
 source(path(root, 'cor_viz_helpers/inter_session/plot_inter_session.r')) # plot_inter_session()
 source(path(root, 'cor_viz_helpers/significance/plot_significance.r')) # plot_significance()
+data_root <- path(here(), 'analysis/data/original')
 text <- 16
 size <- 16
 
-fig_save_root <- path(here(), 'analysis/scripts/figures/figures_scratch')
+
+
+
+
+
+# --- !! CUSTOMIZE THESE DIRECTORIES !! --- #
+
+# Where do you want to save your figures?
+fig_save_root <- path(here(), 'analysis/scripts/sandbox/figures/figures_scratch')
+# fig_save_root <- path('path/to/data')
+
+# Where is your data (if not in analysis/data/original)
+#data_root <- path('path/to/data')
+
+# ------------------------------------------ #
+
+
+
+
+
+
+# --- PRELIMINARY PROCESSING (SHOULDN'T NEED TO EDIT) --- #
+
 if (!dir_exists(fig_save_root)) {
     dir_create(fig_save_root)
 }
@@ -50,8 +72,6 @@ if (file.exists(path(data_root, '../correlation_data/correlations_long.feather')
     stop('correlations_long.csv is missing. First run 01-format_data.py, then run 03-make_flat_data.py, 
          then run 04-compute_correlations.r')
 }
-
-# --- PRELIMS ---#
 
 # Get channel coordinates from Python
 use_condaenv('eeg-fmri')
@@ -79,9 +99,13 @@ d <- d_run %>%
 # ========================================= # 
 
 
-# --- GENERATE PLOTS --- #
+# --- PLOT GENERATION --- #
+# (edit as needed)
 
-# - DNa through DAN heat over topo - #
+
+
+
+# --- HEAT MAPS --- #
 
 networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb')
 
@@ -90,6 +114,8 @@ p1 <- plot_heat(d, networks, axis_text = 12)
 ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
 
+
+# --- TOPO PLOTS --- #
 
 bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
 p2 <- plot_topo(d, networks, bands)
@@ -102,13 +128,8 @@ g <- ggarrange(p1, p2, nrow=2)
 ggsave(plot=g, file=path(root, 'cor_viz_helpers/heat_maps/dna_through_dan.png'), 
        height = 10, width = 10, units = 'in', dpi = 300)
 
-# - FPN A and B - #
 
-# Heat maps across full lags
-p1 <- plot_heat(c('FPNa', 'FPNb'))
-ggsave(plot = p1, file=path(root, 'figures/heat_maps/FPNa_FPNb_heat.png'),
-       height = 6, width = 10, units = 'in', dpi = 300)
-
+# --- SIGNIFICANCE PLOTS --- #
 # Heat maps with significance to 10 s lags
 #networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
 bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
@@ -118,7 +139,7 @@ ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
        width = 1920, height = 980, units = 'px', dpi = 150)
 
 
-# - Inter session plot - #
+# --- INTER SESSION PLOT --- #
 
 p <- plot_inter_session(d_run, networks, bands, label_middle=FALSE, 
                         return_icc = FALSE, axis_text = 12, overall_text=16)
@@ -127,7 +148,7 @@ ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
        width = 1920, height = 980, units = 'px', dpi = 150)
 
 
-# - By task plots - #
+# --- BY TASK PLOTS --- #
 
 d_task <- read_feather(path(data_root, '../correlation_data/correlations_long_bytask.feather'))
 # Adjust lag to seconds
@@ -168,5 +189,4 @@ ggsave(plot=p, file=path(fig_save_root, 'by_task.png'),
 
 
 
-ggsave(plot=p, file=path(root, 'temp.png'), width = 1920, height = 1080, units = 'px', dpi = 150)
 
