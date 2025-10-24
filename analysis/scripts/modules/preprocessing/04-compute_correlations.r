@@ -19,8 +19,9 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
     
     setDT(d)
     
-    # Make cache dir
-    if (!dir.exists(path(script_root, 'cache'))) {
+    # Make / refresh cache dir
+    if (dir.exists(path(script_root, 'cache'))) {
+        dir_delete(path(script_root, 'cache'))
         dir.create(path(script_root, 'cache'))
     }
     
@@ -61,7 +62,7 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
     }
 
     # Increase globals size to avoid serialization errors
-    options(future.globals.maxSize = 16 * 1024^3) # 8 GB
+    options(future.globals.maxSize = 16 * 1024^3) # 16 GB
     
     print('Computing correlations...')
 
@@ -130,7 +131,7 @@ d <- read_feather(path(data_root, '../correlation_data/merged_data.feather'))
 ch_names <- suppressWarnings(readLines(path(data_root, '../correlation_data/ch_names.txt')))
 
 # -- GET CORRELATIONS -- # 
-compute_correlations(d, script_root)
+compute_correlations(d, script_root, by_task)
 
 # -- FORMAT RESULT -- #
 # For each (fmri_networks, eeg_features) matrix, transpose it, add it subject/session/run
