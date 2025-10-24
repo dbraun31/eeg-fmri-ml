@@ -1,7 +1,8 @@
 # -- FREQ X LAG WITH SIGNIFICANCE -- #
 
 plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
-                              overall_text=25, axis_text=18, legend_text=16) {
+                              overall_text=25, axis_text=18, legend_text=16,
+                              y_label=NA, x_label=NA, by_channels=FALSE, title='') {
     #' Plot Frequency–Lag Heatmap with Significance Markers
     #'
     #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
@@ -27,6 +28,17 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
     #' @examples
     #' plot_significance(df, networks = c("DMN", "DAN"), bands = c("alpha", "beta"))
     
+    y_var <- ifelse(by_channels, 'channel', 'lag')
+    y_label <- ifelse(!is.na(x_label), x_label,
+                      ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
+    x_label <- ifelse(is.na(x_label), 'Frequency (Hz)', x_label)
+    
+    colors <- case_when(
+        is.na(colors) ~ rev(brewer.pal(11, 'RdBu')),
+        length(colors) == 2 ~ colorRampPalette(c(colors[1], 'white', colors[2]))(11),
+        length(colors) > 2 ~ colorRampPalette(colors)(11),
+        .default = rev(brewer.pal(11, 'RdBu'))
+    )
     
 	# Get frequency bands
 	breaks <- c(0, 1, 4, 8, 12, 30, 40)
@@ -48,9 +60,9 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 		mutate(bin = cut(frequency, breaks, labels)) %>% 
 		filter(bin %in% bands_grab, lag <= 10,
 			   network %in% !!networks) %>% 
-		group_by(subject, lag, network, bin) %>% 
+		group_by(subject, !!sym(y_var), network, bin) %>% 
 		summarize(cors = mean(cors)) %>% 
-		group_by(lag, network, bin) %>% 
+		group_by(!!sym(y_var), network, bin) %>% 
 		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
 	    group_by(network) %>% 
 		mutate(p_adj = p.adjust(p, method='fdr'),
@@ -62,7 +74,7 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 		mutate(bin = cut(frequency, breaks, labels)) %>% 
 		filter(bin %in% bands_grab, lag <= 10,
 			   network %in% !!networks) %>% 
-		group_by(bin, lag, network) %>% 
+		group_by(bin, !!sym(y_var), network) %>% 
 		summarize(cors = mean(cors)) %>% 
 		mutate(network = factor(network, levels = networks))
 	
@@ -77,12 +89,12 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 	
 	# Whether to label the middle of scale
     if (label_middle) {
-		sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+		sfg <- scale_fill_gradientn(colors = colors,
 							 values = rescale(c(small, 0, big)),
 							 breaks = c(small, 0, big),
 							 limits = c(small, big))  
     } else {
-		sfg <- scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+		sfg <- scale_fill_gradientn(colors = colors,
 							 values = rescale(c(small, 0, big)),
 							 breaks = c(small, big),
 							 limits = c(small, big))  
@@ -90,14 +102,13 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 
 	# Generate plot
 	p <- pd %>%     
-		ggplot(aes(x = bin, y = lag)) + 
+		ggplot(aes(x = bin, y = !!sym(y_var))) + 
 		geom_tile(aes(fill = cors)) + 
-		geom_point(data=ps, aes(x = bin, y = lag), shape = 8, color = 'gold', size = 3) + 
+		geom_point(data=ps, aes(x = bin, y = !!sym(y_var)), shape = 8, color = 'gold', size = 3) + 
 		facet_wrap(~network, nrow=1) + 
-		scale_y_continuous(breaks = seq(0, 10, 2), labels = seq(0, 10, 2)) +
 		labs(
-			x = 'Frequency bin',
-			y = 'Lag (s)',
+			x = x_label,
+			y = y_label,
 			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
 		) + 
 	    sfg + 
@@ -112,5 +123,8 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			  legend.text = element_text(size = legend_text, angle = 45, hjust=1),
 			  legend.title = element_text(margin = margin(r = 30)))
 		
+	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
+	if (title == '') p1 <- p1 + theme(plot.title = element_blank())
+	
 	return (p)
 }

@@ -1,6 +1,7 @@
 library(glue)
 
-plot_topo <- function(d, networks, bands, scales = NA, overall_text=18) {
+plot_topo <- function(d, networks, bands, scales = NA, overall_text=18, 
+                        title='', colors=NA) {
     #' Plot Topographic Map of Mean Correlations
     #'
     #' Generates faceted EEG topographic maps of mean correlation values (`cors`) 
@@ -23,6 +24,14 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18) {
     #' @examples
     #' plot_topo(df, networks = c("DMN", "DAN"), bands = c("alpha", "beta"))
 
+    
+    colors <- case_when(
+        is.na(colors) ~ rev(brewer.pal(11, 'RdBu')),
+        length(colors) == 2 ~ colorRampPalette(c(colors[1], 'white', colors[2]))(11),
+        length(colors) > 2 ~ colorRampPalette(colors)(11),
+        .default = rev(brewer.pal(11, 'RdBu'))
+    )
+    
 	# Get frequency bands
 	breaks <- c(0, 1, 4, 8, 12, 30, 40)
 	labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
@@ -65,11 +74,12 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18) {
 		ggplot(aes(x = x, y = y, z = z)) + 
 		geom_topo(chan_markers = 'text', aes(fill = cors, label = channel)) +
 		facet_grid(band~network) + 
-		scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+		scale_fill_gradientn(colors = colors, 'RdBu',
 							 values = rescale(c(small, 0, big)),
 							 breaks = c(small, 0, big),
 							 limits = c(small, big)) +
 		labs(
+		    title = title,
 			x = '',
 			y = '',
 			fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')

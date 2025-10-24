@@ -103,13 +103,11 @@ d <- d_run %>%
 # (edit as needed)
 
 
-
-
 # --- HEAT MAPS --- #
 
-networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb', 'Yeo7')
+networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb', 'Yeo7_DN')
 
-p1 <- plot_heat(d, networks, axis_text = 6, by_channels=TRUE)
+p1 <- plot_heat(d, networks, axis_text = 14, by_channels=FALSE)
 
 ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
@@ -123,6 +121,7 @@ p2 <- plot_topo(d, networks, bands)
 ggsave(plot=p2, file=path(fig_save_root, 'topos.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
 
+# Example of how to merge plots as panels in a composite figure
 g <- ggarrange(p1, p2, nrow=2)
 
 ggsave(plot=g, file=path(root, 'cor_viz_helpers/heat_maps/dna_through_dan.png'), 
@@ -133,7 +132,8 @@ ggsave(plot=g, file=path(root, 'cor_viz_helpers/heat_maps/dna_through_dan.png'),
 # Heat maps with significance to 10 s lags
 #networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
 bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
-p <- plot_significance(d, networks, bands, label_middle=FALSE, axis_text = 12)
+p <- plot_significance(d, networks, bands, label_middle=FALSE, axis_text = 12,
+                       by_channels=TRUE)
     
 ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
        width = 1920, height = 980, units = 'px', dpi = 150)
@@ -142,7 +142,7 @@ ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
 # --- INTER SESSION PLOT --- #
 
 p <- plot_inter_session(d_run, networks, bands, label_middle=FALSE, 
-                        return_icc = FALSE, axis_text = 12, overall_text=16)
+                        return_icc = TRUE, axis_text = 12, overall_text=16)
 
 ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
        width = 1920, height = 980, units = 'px', dpi = 150)
@@ -153,7 +153,7 @@ ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
 d_task <- read_feather(path(data_root, '../correlation_data/correlations_long_bytask.feather'))
 # Adjust lag to seconds
 d_task$lag <- d_task$lag * 2
-p <- plot_by_task(d_task, networks, bands)
+p <- plot_by_task(d_task, networks, bands, by_channels=TRUE)
 
 
 ggsave(plot=p, file=path(fig_save_root, 'by_task.png'),

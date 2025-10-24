@@ -7,8 +7,8 @@ maybe_log_scale <- function(x, tol = 1e-6) {
 }
 
 plot_heat <- function(d, networks, scales = NA,
-                      overall_text=18, axis_text=16, x_label=NA,
-                      by_channels=FALSE) {
+                      overall_text=18, axis_text=16, x_label=NA, y_label=NA,
+                      title='', by_channels=FALSE, colors=NA) {
     #' Plot Heatmap of Mean Correlations by Frequency and Lag
     #'
     #' Generates a faceted heatmap of mean correlation values (`cors`) across
@@ -35,6 +35,14 @@ plot_heat <- function(d, networks, scales = NA,
     y_var <- ifelse(by_channels, 'channel', 'lag')
     y_label <- ifelse(!is.na(x_label), x_label,
                       ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
+    x_label <- ifelse(is.na(x_label), 'Frequency (Hz)', x_label)
+    
+    colors <- case_when(
+        is.na(colors) ~ rev(brewer.pal(11, 'RdBu')),
+        length(colors) == 2 ~ colorRampPalette(c(colors[1], 'white', colors[2]))(11),
+        length(colors) > 2 ~ colorRampPalette(colors)(11),
+        .default = rev(brewer.pal(11, 'RdBu'))
+    )
     
 	# Get frequency bands
 	breaks <- c(0, 1, 4, 8, 12, 30, 40)
@@ -65,12 +73,13 @@ plot_heat <- function(d, networks, scales = NA,
 		ggplot(aes(x = frequency, y = !!sym(y_var))) +
 	    geom_tile(aes(fill = cors)) +
 		facet_wrap(~network) +
-		scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+		scale_fill_gradientn(colors = colors,
 							 values = rescale(c(small, 0, big)),
 							 limits = c(small, big),
 							 breaks = c(small, 0, big),
 							 labels = c(small, 0, big)) + 
 		labs(
+		    title = title,
 			x = 'Frequency (Hz)',
 			y = y_label,
 			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
@@ -84,8 +93,8 @@ plot_heat <- function(d, networks, scales = NA,
 			  text = element_text(size=overall_text))
 	
 	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
-		
 	if (maybe_log_scale(pd$frequency)) p1 <- p1 + scale_x_log10()
+	if (title == '') p1 <- p1 + theme(plot.title = element_blank())
 
 	return(p1)
 

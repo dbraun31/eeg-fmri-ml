@@ -1,6 +1,8 @@
 plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE, 
                                return_icc=TRUE, n_lags=10, scales=NA,
-                               overall_text=18, axis_text=16) {
+                               overall_text=18, axis_text=16,
+                               title='', y_label=NA, x_label=NA, colors_cor=NA,
+                               colors_icc=NA, by_channels=FALSE) {
     
     #' Plot Inter-Session Reliability and Mean Correlations
     #'
@@ -32,6 +34,27 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
     #' plot_inter_session(df, networks = c("DMN", "DAN"), n_lags = 8)
     
     
+    y_var <- ifelse(by_channels, 'channel', 'lag')
+    y_label <- ifelse(!is.na(x_label), x_label,
+                      ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
+    x_label <- ifelse(!is.na(x_label), 'Frequency (Hz)', x_label)
+    
+    # Modify cor colors
+    colors_cor <- case_when(
+        is.na(colors_cor) ~ rev(brewer.pal(11, 'RdBu')),
+        length(colors_cor) == 2 ~ colorRampPalette(c(colors_cor[1], 'white', colors_cor[2]))(11),
+        length(colors_cor) > 2 ~ colorRampPalette(colors_cor)(11),
+        .default = rev(brewer.pal(11, 'RdBu'))
+    )
+    
+    # Modify ICC colors
+    colors_icc <- case_when(
+        is.na(colors_icc) ~ as.character(paletteer::paletteer_c('ggthemes::Green', n=100)),
+        length(colors_icc) == 2 ~ colorRampPalette(c(colors_icc[1], colors_icc[2]))(100),
+        length(colors_icc) > 2 ~ colorRampPalette(colors_icc)(100),
+        .default = as.character(paletteer::paletteer_c('ggthemes::Green', n=100))
+    )
+    
     
 
 	# --- GENERATE CORRELATION HEATMAPS --- #
@@ -39,9 +62,9 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 	# Summarize across conditions and compute data to plot
 	pd1 <- d_run %>%
 		filter(network %in% !!networks, lag <= n_lags) %>%
-		group_by(subject, session, frequency, lag, network) %>%
+		group_by(subject, session, frequency, !!sym(y_var), network) %>%
 		summarize(cors = mean(cors)) %>%
-		group_by(session, frequency, lag, network) %>%
+		group_by(session, frequency, !!sym(y_var), network) %>%
 		summarize(cors = mean(cors)) 
 
 	# Whether to use user-specified scales
@@ -69,9 +92,10 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 	# Generate correlation heat map plot
 	p1 <- pd1 %>%
 		mutate(session = recode(session, `ses-001` = 'Session 1', `ses-002` = 'Session 2')) %>% 
-		ggplot(aes(x = frequency, y = lag)) +
+		ggplot(aes(x = frequency, y = !!sym(y_var))) +
 		geom_raster(aes(fill = cors), interpolate=TRUE) + 
 		labs(
+		    title = title,
 			 x = 'Frequency (Hz)',
 			 y = 'Lag (s)',
 			 fill = latex2exp::TeX('$\\rho_{~~EEG,fMRI}$')) + 
@@ -87,6 +111,8 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 			  axis.text = element_text(size = axis_text))
 	
 	if (maybe_log_scale(pd1$frequency)) p1 <- p1 + scale_x_log10()
+	if (title == '') p1 <- p1 + theme(plot.title = element_blank())
+	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
 	
 	# Either return correlations and ICC or just correlations
 	
@@ -112,8 +138,6 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 		group_by(frequency, lag, network) %>%
 		summarize(icc = get_icc(ses001, ses002)) 
 
-	pal <- paletteer::paletteer_c('ggthemes::Green', n = 100)
-
 	# Generate ICC plot
 	p2 <- pd %>%
 		ggplot(aes(x = frequency, y = lag)) +
@@ -123,7 +147,7 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 			 y = 'Lag (s)',
 			 main = 'Intraclass Correlation Coefficient',
 			 fill = 'ICC') + 
-		scale_fill_gradientn(colors = pal) + 
+		scale_fill_gradientn(colors = colors_icc) + 
 	    facet_wrap(~network) + 
 		theme_bw() + 
 		theme(legend.position = 'bottom',

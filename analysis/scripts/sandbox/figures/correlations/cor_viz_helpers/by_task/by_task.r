@@ -1,11 +1,27 @@
 
 plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
-                         scales=NA) {
+                         scales=NA, title='', x_label=NA, y_label=NA, by_channels=FALSE,
+                         colors=NA) {
     
+    
+    # Configure inputs
+    y_var <- ifelse(by_channels, 'channel', 'lag')
+    y_label <- ifelse(!is.na(x_label), x_label,
+                      ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
+    x_label <- ifelse(is.na(x_label), 'Frequency (Hz)', x_label)
+    
+    colors <- case_when(
+        is.na(colors) ~ rev(brewer.pal(11, 'RdBu')),
+        length(colors) == 2 ~ colorRampPalette(c(colors[1], 'white', colors[2]))(11),
+        length(colors) > 2 ~ colorRampPalette(colors)(11),
+        .default = rev(brewer.pal(11, 'RdBu'))
+    )
+    
+    # Summarize data
     pd <- d_task %>% 
-        group_by(subject, network, frequency, lag, task) %>% 
+        group_by(subject, network, frequency, !!sym(y_var), task) %>% 
         summarize(cors = mean(cors)) %>% 
-        group_by(network, frequency, lag, task) %>% 
+        group_by(network, frequency, !!sym(y_var), task) %>% 
         summarize(cors = mean(cors)) 
     
     # Set scale constraints
@@ -18,15 +34,16 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
     }
     
     p <- pd %>% 
-        ggplot(aes(x = frequency, y = lag)) + 
+        ggplot(aes(x = frequency, y = !!sym(y_var))) + 
         geom_tile(aes(fill = cors)) + 
         facet_grid(task ~ network) + 
         labs(
-            x = 'Frequency (Hz)',
-            y = 'Lag (s)',
+            title = title,
+            x = x_label,
+            y = y_label,
             fill = latex2exp::TeX('$\\rho_{~~EEG,fMRI}$')
         ) + 
-        scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
+        scale_fill_gradientn(colors = colors,
                              values = rescale(c(small, 0, big)),
                              limits = c(small, big),
                              breaks = c(small, 0, big),
@@ -40,6 +57,8 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
               legend.position = 'bottom')
     
     if(maybe_log_scale(d$frequency)) p <- p + scale_x_log10()
+    if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
+    if (title == '') p1 <- p1 + theme(plot.title = element_blank())
     
     return(p)
     
