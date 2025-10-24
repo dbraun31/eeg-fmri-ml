@@ -5,11 +5,4 @@ DNb
 SAL
 FPCNa
 FPCNb
-LH_DefaultA_PFCm_1
 Yeo7_DN
-LH_ContB_PFCmp_1
-LH_DefaultA_PFCm_1
-LH_DefaultB_PFCd_3
-RH_ContB_IPL_2
-RH_DefaultA_IPL_1
-RH_DefaultB_IPL_1
