@@ -7,11 +7,11 @@ parse_run <- function(combo, data_root) {
     subject <- combo$subject
     session <- combo$session
     network <- combo$network
-    dir_path <- file.path(data_root, subject, session, 'func')
+    dir_path <- file.path(data_root, subject, session, 'func/conditions')
     
     # Import gradcpt
     pattern <- glue('{network}_.*{subject}_bld001.*')
-    file <- list.files(dir_path, pattern = pattern, full.names = TRUE)
+    file <- list.files(path(dir_path, '../general'), pattern = pattern, full.names = TRUE)
     fmri <- sapply(readLines(file), as.numeric)
     gradcpt <- data.frame(run = 'run-001', tr = 1:length(fmri), condition = 'gradcpt', fmri = fmri)
     
@@ -69,7 +69,6 @@ parse_run <- function(combo, data_root) {
 
 get_condition_codes <- function(data_root, network) {
     
-    if (data_root == path('analysis/data/original')) setwd(here())
     subjects <- list.dirs(path(data_root), recursive=FALSE, full.names = FALSE)
     sessions <- c('ses-001', 'ses-002')
     

@@ -34,9 +34,9 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
     # Make running by condition conditional on user input
     if (by_task) {
         condition_codes <- get_condition_codes(data_root, network=fmri_cols[1])
-        d <- inner_join(d, condition_codes)
+        d <- d[condition_codes, on = c('subject', 'session', 'run', 'tr'), nomatch = 0]
         # Rearrange columns
-        d <- d[, c(colnames(condition_codes), colnames(d)[!colnames(d) %in% colnames(condition_codes)])]
+        d <- d[, c(colnames(condition_codes), colnames(d)[!colnames(d) %in% colnames(condition_codes)]), with = FALSE]
     }
     
     # Split data by subject, session, run
@@ -74,8 +74,6 @@ compute_correlations <- function(d, script_root, by_task=FALSE) {
         write_feather(formatted, path(script_root, glue('cache/{rid}.feather')))
         NULL
     }, future.seed = FALSE)
-
-    return(run_ids)
 
 }
 
@@ -132,16 +130,19 @@ d <- read_feather(path(data_root, '../correlation_data/merged_data.feather'))
 ch_names <- suppressWarnings(readLines(path(data_root, '../correlation_data/ch_names.txt')))
 
 # -- GET CORRELATIONS -- # 
-run_ids <- compute_correlations(d, script_root)
-cache_dir <- path(script_root, 'cache')
-rm(d)
-gc()
-
-# Import correlations from cache
-files <- dir_ls(cache_dir, glob = '*.feather')
-d <- do.call(rbind, lapply(files, read_feather))
+compute_correlations(d, script_root)
 
 # -- FORMAT RESULT -- #
+# For each (fmri_networks, eeg_features) matrix, transpose it, add it subject/session/run
+# info, and concatenate
+print('Formatting the result...')
+rm(d)
+gc()
+cache_dir <- path(script_root, 'cache')
+files <- dir_ls(cache_dir, glob = '*.feather')
+
+d <- do.call(rbind, lapply(files, read_feather))
+
 d <- d %>% 
     separate(eeg_feature, into = c('channel', 'frequency', 'lag'), sep = '_') %>%
     mutate(frequency = as.numeric(frequency),
@@ -159,10 +160,11 @@ file <- ifelse(by_task, 'correlations_long_bytask.feather', 'correlations_long.f
 write_feather(d, path(data_root, glue('../correlation_data/{file}')))
 
 
-# delete cache
+# Clear cache
 dir_delete(cache_dir)
-rm(list = ls())
+rm(list=ls())
 gc()
+
 
 
 
