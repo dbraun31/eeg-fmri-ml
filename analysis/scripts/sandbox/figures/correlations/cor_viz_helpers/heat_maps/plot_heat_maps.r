@@ -7,7 +7,8 @@ maybe_log_scale <- function(x, tol = 1e-6) {
 }
 
 plot_heat <- function(d, networks, scales = NA,
-                      overall_text=18, axis_text=16) {
+                      overall_text=18, axis_text=16, x_label=NA,
+                      by_channels=FALSE) {
     #' Plot Heatmap of Mean Correlations by Frequency and Lag
     #'
     #' Generates a faceted heatmap of mean correlation values (`cors`) across
@@ -31,6 +32,10 @@ plot_heat <- function(d, networks, scales = NA,
     #' @examples
     #' plot_heat(df, networks = c("DMN", "FPN"), scales = c(-0.2, 0.3))
     
+    y_var <- ifelse(by_channels, 'channel', 'lag')
+    y_label <- ifelse(!is.na(x_label), x_label,
+                      ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
+    
 	# Get frequency bands
 	breaks <- c(0, 1, 4, 8, 12, 30, 40)
 	labels <- c('init', 'Delta', 'Theta', 'Alpha', 'Beta', 'Gamma')
@@ -39,10 +44,10 @@ plot_heat <- function(d, networks, scales = NA,
 
 	# Prep data
 	pd <- d %>% 
-		filter(network %in% !!networks) %>%
-		group_by(subject, lag, frequency, network) %>% 
+		filter(network %in% networks) %>%
+		group_by(subject, !!sym(y_var), frequency, network) %>% 
 		summarize(cors = mean(cors)) %>% 
-		group_by(lag, frequency, network) %>% 
+		group_by(!!sym(y_var), frequency, network) %>% 
 		summarize(cors = mean(cors)) 
 
 	# Set scale constraints
@@ -56,9 +61,9 @@ plot_heat <- function(d, networks, scales = NA,
 
 	# Plot
 	p1 <- pd %>% 
-		mutate(network = factor(network, levels = !!networks)) %>%
-		ggplot(aes(x = frequency, y = lag)) +
-	    geom_raster(aes(fill = cors), interpolate = TRUE) + 
+		mutate(network = factor(network, levels = networks)) %>%
+		ggplot(aes(x = frequency, y = !!sym(y_var))) +
+	    geom_tile(aes(fill = cors)) +
 		facet_wrap(~network) +
 		scale_fill_gradientn(colors = rev(brewer.pal(11, 'RdBu')),
 							 values = rescale(c(small, 0, big)),
@@ -67,10 +72,9 @@ plot_heat <- function(d, networks, scales = NA,
 							 labels = c(small, 0, big)) + 
 		labs(
 			x = 'Frequency (Hz)',
-			y = 'Lag (s)',
+			y = y_label,
 			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
 		) + 
-		scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) + 
 		theme_bw() + 
 		theme(strip.background = element_rect(fill = NA),
 			  panel.grid = element_blank(),
@@ -79,6 +83,8 @@ plot_heat <- function(d, networks, scales = NA,
 			  legend.position = 'bottom',
 			  text = element_text(size=overall_text))
 	
+	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
+		
 	if (maybe_log_scale(pd$frequency)) p1 <- p1 + scale_x_log10()
 
 	return(p1)

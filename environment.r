@@ -1,6 +1,6 @@
 install.packages(c('ggridges', 'tidyverse', 'glue', 'data.table', 'ggpubr', 'here',
                    'fs', 'psych', 'scales', 'RColorBrewer', 'reticulate', 'remotes',
-                   'latex2exp'))
+                   'latex2exp', 'paletteer'))
 
 
 

@@ -107,9 +107,9 @@ d <- d_run %>%
 
 # --- HEAT MAPS --- #
 
-networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb')
+networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb', 'Yeo7')
 
-p1 <- plot_heat(d, networks, axis_text = 12)
+p1 <- plot_heat(d, networks, axis_text = 6, by_channels=TRUE)
 
 ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
