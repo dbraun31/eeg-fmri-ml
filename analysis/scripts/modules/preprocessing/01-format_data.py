@@ -180,7 +180,6 @@ class Reformat:
                     continue
                     
                 # Check for inconsistent number of runs across timeseries / eeg data 
-                embed()
                 fmri_lens = [len(x) for x in files_fmri.values()]
                 if not all([fmri_lens[0] == x for x in fmri_lens]) or len(files_eeg) != fmri_lens[0]:
                     message = ("Number of files detected for EEG not equal to "
