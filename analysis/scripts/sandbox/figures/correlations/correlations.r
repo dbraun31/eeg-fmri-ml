@@ -22,13 +22,17 @@ library(reticulate)
 setwd(path(here()))
 root <- path('analysis/scripts/sandbox/figures/correlations')
 source(path(root, 'cor_viz_helpers/heat_maps/plot_heat_maps.r')) # plot_heat()
+source(path(root, 'cor_viz_helpers/by_task/by_task.r')) # plot_by_task()
 source(path(root, 'cor_viz_helpers/topos/plot_topos.r')) # plot_topo()
 source(path(root, 'cor_viz_helpers/inter_session/plot_inter_session.r')) # plot_inter_session()
 source(path(root, 'cor_viz_helpers/significance/plot_significance.r')) # plot_significance()
 text <- 16
 size <- 16
 
-fig_save_root <- path('~/Dropbox/post_doc/professional/meeting_notes/lab/2025-10-23')
+fig_save_root <- path(here(), 'analysis/scripts/figures/figures_scratch')
+if (!dir_exists(fig_save_root)) {
+    dir_create(fig_save_root)
+}
 
 # --- Parse user given data directory if supplied --- #
 args <- commandArgs(trailingOnly=TRUE)
