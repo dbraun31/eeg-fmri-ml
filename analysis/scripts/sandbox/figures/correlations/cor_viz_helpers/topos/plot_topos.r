@@ -1,7 +1,7 @@
 library(glue)
 
 plot_topo <- function(d, networks, bands, scales = NA, overall_text=18, 
-                        title='', colors=NA) {
+                        title='', colors=NA, nlags_s=NA) {
     #' Plot Topographic Map of Mean Correlations
     #'
     #' Generates faceted EEG topographic maps of mean correlation values (`cors`) 
@@ -47,6 +47,7 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18,
 	bands_grab <- labels[2:(length(labels))][which(labels_simple %in% bands)]
 	
 
+	if (!is.na(nlags_s)) d <- d[d$lag <= nlag_s,]
 	pd <- d %>% 
 		mutate(band = cut(frequency, breaks, labels)) %>% 
 		filter(band != 'init (0,1]') %>% 

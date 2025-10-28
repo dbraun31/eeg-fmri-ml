@@ -2,7 +2,8 @@
 
 plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
                               overall_text=25, axis_text=18, legend_text=16,
-                              y_label=NA, x_label=NA, by_channels=FALSE, title='') {
+                              y_label=NA, x_label=NA, by_channels=FALSE, title='', 
+                              colors=NA, nlag_s=NA) {
     #' Plot Frequency–Lag Heatmap with Significance Markers
     #'
     #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
@@ -56,6 +57,7 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 	bands_grab <- labels[2:(length(labels))][which(labels_simple %in% bands)]
 	
 	# Generate significance markers
+	if (!is.na(nlag_s)) d <- d[d$lag <= nlag_s,]
 	ps <- d %>% 
 		mutate(bin = cut(frequency, breaks, labels)) %>% 
 		filter(bin %in% bands_grab, lag <= 10,
@@ -123,8 +125,8 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			  legend.text = element_text(size = legend_text, angle = 45, hjust=1),
 			  legend.title = element_text(margin = margin(r = 30)))
 		
-	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
-	if (title == '') p1 <- p1 + theme(plot.title = element_blank())
+	if (y_var == 'lag') p <- p + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
+	if (title == '') p <- p + theme(plot.title = element_blank())
 	
 	return (p)
 }

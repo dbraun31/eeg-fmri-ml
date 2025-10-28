@@ -1,3 +1,4 @@
+# Import libraries
 rm(list=ls())
 library(tidyverse)
 library(paletteer)
@@ -5,18 +6,7 @@ library(arrow)
 library(fs)
 library(here)
 
-
-# --- PLOT CONFIG VARS --- #
-# (you can change any of these before outputting a specific plot and it'll update for that plot)
-# (or keep them constant and they'll apply to all corresponding plots)
-
-overall_text <- 18
-axis_text <- 16
-gradient_colors <- paletteer_c('ggthemes::Green', n=100)
-
-
-# ----------------------- #
-
+# Import data
 setwd(here())
 data_root <- path('analysis/data/original')
 fig_save_root <- path('analysis/scripts/sandbox/session_icc_steps')
@@ -25,14 +15,49 @@ fig_save_root <- path('analysis/scripts/sandbox/session_icc_steps')
 # data_root <- path('path/to/data')
 # fig_save_root <- path('path/to/figures)
 
+dpath <- path(data_root, '../correlation_data/iccs.csv')
+d <- read.csv(dpath)
+networks <- unique(d$network)
+d$lag <- d$lag * 2 # Convert to seconds
+gradient_colors <- paletteer_c('ggthemes::Green', n=100)
+network_colors <- NA
+
+
+
+# --- PLOT CONFIG VARS --- #
+# --- EDIT THE BELOW --- #
+# (you can change any of these before outputting a specific plot and it'll update for that plot)
+# (or keep them constant and they'll apply to all corresponding plots)
+
+overall_text <- 18
+axis_text <- 16
+
+# Networks to include
+#networks <- c('DNa', 'DNb')
+
+# Which color to assign to each network in the overall ICC plot
+# Order of colors should match order of 'networks' var
+# (hex values work here)
+#network_colors <- c('blue', 'green')
+
+# Colors for gradient ICC plot
+#gradient_colors <- c('blue', 'green')
+
+# How many lags (in seconds) to include
+nlag_s <- 10
+
+# Whether to plot the heatmap by channel (FALSE means by lag)
+by_channel <- FALSE
+
+
+# ----------------------- #
+
+
+# --- INSPECT TRS BY RUN --- # 
 # Full data for TRs in run histograms across subjects
 # (This is a big dataset)
 d_full <- read_feather(path(data_root, '../correlation_data/merged_data.feather'))
 
-dpath <- path(data_root, '../correlation_data/iccs.csv')
-d <- read.csv(dpath)
-
-# Inspect TRs by run
 d_full %>% 
     select(subject:tr) %>% 
     group_by(subject, session, run) %>% 
@@ -57,16 +82,19 @@ ggsave(path(fig_save_root, 'mins_per_run.png'), width = 1920, height = 1080, uni
 rm(d_full)
 gc()
 
-# Visualize aggregate result
-d %>% 
+
+
+
+# -- VISUALIZE AGGREGATE ICC RESULT -- #
+
+p <- d %>% 
     mutate(run = as.integer(str_extract(run_set, '_(\\d)', group = 1))) %>% 
-    head()
-    group_by(run) %>% 
+    filter(lag <= nlag_s, network %in% !!networks) %>% 
+    group_by(run, network) %>% 
     summarize(icc = mean(icc)) %>% 
     ggplot(aes(x = run, y = icc)) +
-    geom_point() + 
-    geom_line() + 
-    ylim(0, .2) + 
+    geom_point(aes(color = network)) + 
+    geom_line(aes(color = network)) + 
     labs(
         x = 'Number of runs in data',
         y = 'Mean intraclass correlation coefficient'
@@ -77,28 +105,46 @@ d %>%
           text = element_text(size = overall_text),
           axis.text = element_text(size = axis_text))
 
-ggsave(path(fig_save_root, 'icc_overall.png'), width = 1920, height = 1080, units = 'px', dpi = 150)
+if (!all(is.na(network_colors))) {
+    colors <- network_colors
+    names(colors) <- networks
+    p <- p + scale_color_manual(values = colors)
+}
 
-greens <- paletteer_c('ggthemes::Green', 100)
+p
 
-d %>% 
+ggsave(plot=p, file=path(fig_save_root, 'icc_overall.png'), width = 1920, height = 1080, units = 'px', dpi = 150)
+
+
+
+
+# --- ICC BY FREQ, LAG/CHANNEL, NETWORK, AND NUMBER OF RUNS --- #
+
+y_var <- ifelse(by_channel, 'channel', 'lag')
+y_label <- ifelse(by_channel, 'Channel', 'Lag (s)')
+
+if (length(gradient_colors) < 10) {
+    gradient_colors <- colorRampPalette(gradient_colors)(100)
+}
+
+p <- d %>% 
     mutate(run_label = recode(run_set, `run_set_1` = 'One run',
                               `run_set_2` = 'Two runs',
                               `run_set_3` = 'Three runs',
                               `run_set_4` = 'Four runs'),
-           lag = as.numeric(lag) * 2,
            frequency = as.numeric(frequency)) %>% 
     mutate(run_label = factor(run_label, levels = c('One run', 'Two runs', 
                                                     'Three runs', 'Four runs'))) %>% 
-    group_by(frequency, lag, run_label) %>% 
+    filter(network %in% !!networks, lag <= nlag_s) %>% 
+    group_by(frequency, !!sym(y_var), run_label, network) %>% 
     summarize(icc = mean(icc)) %>% 
-    ggplot(aes(x = frequency, y = lag)) + 
+    ggplot(aes(x = frequency, y = !!sym(y_var))) + 
     geom_tile(aes(fill = icc)) + 
-    facet_wrap(~run_label) +
+    facet_grid(network~run_label) +
     scale_fill_gradientn(colors = gradient_colors) + 
     labs(
         x = 'Frequency (Hz)',
-        y = 'Lag (s)',
+        y = y_label,
         fill = 'Intraclass correlation\ncoefficient'
     ) + 
     theme_bw() + 
@@ -110,5 +156,6 @@ d %>%
           text = element_text(size = overall_text),
           axis.text = element_text(size = axis_text))
 
+p
 
-ggsave(path(fig_save_root, 'icc_freq_lag.png'), width = 1920, height = 1080, units = 'px', dpi = 150)
+ggsave(plot=p, file=path(fig_save_root, 'icc_freq_lag.png'), width = 1920, height = 1080, units = 'px', dpi = 150)

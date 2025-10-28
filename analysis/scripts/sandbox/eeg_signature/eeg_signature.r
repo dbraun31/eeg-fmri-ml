@@ -39,7 +39,7 @@ compute_tr_metrics <- function(row, cors, networks) {
     eeg_cors <- cors[
         subject == subject_row & session == session_row, # Subset
     ][
-       , feature := paste(channel, frequency, lag, sep = '_') # Make feature key
+       , feature := paste(channel, frequency, sep = '_') # Make feature key
           
     ][
         , c('feature', networks), with = FALSE # Select feature key and fmri networks
@@ -75,6 +75,20 @@ compute_network_metrics <- function(network, power) {
     return(c(dot_product, rho))
 }
 
+truncate_gradcpt_data <- function(d) {
+    # Takes in TR level gradcpt data
+    # Keeps only lag 0
+    # Updates column names appropriately
+    
+    stem <- d[,1:3]
+    leaf <- d[, 4:ncol(d)]
+    
+    leaf <- leaf[, grepl('*_0$', colnames(leaf)), with=FALSE]
+    new_cols <- unname(sapply(colnames(leaf), FUN = function(x) str_replace(x, '_\\d+$', '')))
+    colnames(leaf) <- new_cols
+    return(cbind(stem, leaf))
+}
+
 # --- SCRIPT STARTS RUNNING HERE --- #
 
 # Parse command line args
@@ -89,6 +103,8 @@ if (length(args) == 0) {
     stop('Usage: Rscript eeg_signature.r path/to/data')
 }
 
+print('Importing and formatting data...')
+
 # Import data
 cors <- as.data.table(read_feather('analysis/data/correlation_data/correlations_long.feather'))
 if (!file.exists(path(data_root, '../correlation_data/correlations_long.feather'))) {
@@ -101,18 +117,19 @@ if (!file.exists(path(data_root, '../correlation_data/gradcpt_eeg.feather'))) {
 d <- as.data.table(read_feather(path(data_root, '../correlation_data/gradcpt_eeg.feather')))
 
 
-# Truncate correlation data
-# Get cors for ES runs only by EEG feature
-
-cors <- cors[run != 'run-001', .(cors = mean(cors)), 
-             by = .(subject, session, channel, frequency, lag, network)]
+# TRUNCATE DATA
+# Take only lag 0 from gradcpt TR data
+d <- truncate_gradcpt_data(d)
+# Get cors for ES runs only by EEG feature (first five lags only)
+cors <- cors[run != 'run-001' & lag <= 5, .(cors = mean(cors)), 
+             by = .(subject, session, channel, frequency, network)]
 
 networks <- unique(cors$network)
 
 # Spread across networks
 cors <- dcast(
     cors,
-    subject + session + channel + frequency + lag ~ network,
+    subject + session + channel + frequency ~ network,
     value.var = 'cors'
 )
 
@@ -137,7 +154,7 @@ row_chunks <- split(1:nrow(d), ceiling(seq_along(1:nrow(d))/chunk_size))
 print('Computing EEG signature metrics...')
 out <- future_lapply(row_chunks, FUN = function(row_idxs) {
     d_sub <- d[row_idxs,]
-    cors_sub <- cors[subject %in% d_sub$subject & session %in% d_sub$session,]
+    cors_sub <- cors[subject %in% unique(d_sub$subject) & session %in% unique(d_sub$session),]
     
     do.call(rbind, lapply(1:nrow(d_sub), function(i) {
         compute_tr_metrics(d_sub[i, ], cors_sub, networks)

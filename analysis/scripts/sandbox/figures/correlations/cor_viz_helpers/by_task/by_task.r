@@ -1,7 +1,7 @@
 
 plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
                          scales=NA, title='', x_label=NA, y_label=NA, by_channels=FALSE,
-                         colors=NA) {
+                         colors=NA, nlag_s=NA) {
     
     
     # Configure inputs
@@ -16,6 +16,8 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
         length(colors) > 2 ~ colorRampPalette(colors)(11),
         .default = rev(brewer.pal(11, 'RdBu'))
     )
+    
+    if (!is.na(nlag_s)) d_task <- d_task[d_task$lag <= nlag_s,]
     
     # Summarize data
     pd <- d_task %>% 
@@ -34,6 +36,7 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
     }
     
     p <- pd %>% 
+        filter(network %in% !!networks) %>% 
         ggplot(aes(x = frequency, y = !!sym(y_var))) + 
         geom_tile(aes(fill = cors)) + 
         facet_grid(task ~ network) + 
@@ -57,8 +60,8 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
               legend.position = 'bottom')
     
     if(maybe_log_scale(d$frequency)) p <- p + scale_x_log10()
-    if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
-    if (title == '') p1 <- p1 + theme(plot.title = element_blank())
+    if (y_var == 'lag') p <- p + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
+    if (title == '') p <- p + theme(plot.title = element_blank())
     
     return(p)
     

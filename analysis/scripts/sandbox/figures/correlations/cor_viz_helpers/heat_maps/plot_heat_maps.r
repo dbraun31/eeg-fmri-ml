@@ -8,7 +8,7 @@ maybe_log_scale <- function(x, tol = 1e-6) {
 
 plot_heat <- function(d, networks, scales = NA,
                       overall_text=18, axis_text=16, x_label=NA, y_label=NA,
-                      title='', by_channels=FALSE, colors=NA) {
+                      title='', by_channels=FALSE, colors=NA, nlags_s=NA, nrow=NA) {
     #' Plot Heatmap of Mean Correlations by Frequency and Lag
     #'
     #' Generates a faceted heatmap of mean correlation values (`cors`) across
@@ -51,6 +51,8 @@ plot_heat <- function(d, networks, scales = NA,
 	labels <- paste(labels, bins, sep=' ')
 
 	# Prep data
+	if (!is.na(nlags_s)) d <- d[d$lag <= nlags_s,]
+	
 	pd <- d %>% 
 		filter(network %in% networks) %>%
 		group_by(subject, !!sym(y_var), frequency, network) %>% 
@@ -92,6 +94,7 @@ plot_heat <- function(d, networks, scales = NA,
 			  legend.position = 'bottom',
 			  text = element_text(size=overall_text))
 	
+	if (!is.na(nrow)) p1 <- p1 + facet_wrap(~network, nrow=nrow)
 	if (y_var == 'lag') p1 <- p1 + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
 	if (maybe_log_scale(pd$frequency)) p1 <- p1 + scale_x_log10()
 	if (title == '') p1 <- p1 + theme(plot.title = element_blank())

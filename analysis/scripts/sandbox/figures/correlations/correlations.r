@@ -105,9 +105,8 @@ d <- d_run %>%
 
 # --- HEAT MAPS --- #
 
-networks <- c('DNa', 'DNb', 'dATNa', 'dATNb', 'SAL', 'FPCNa', 'FPCNb', 'Yeo7_DN')
-
-p1 <- plot_heat(d, networks, axis_text = 14, by_channels=FALSE)
+networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
+p1 <- plot_heat(d, networks, axis_text = 14, by_channels=FALSE, nlags_s=10, nrow = 1)
 
 ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
@@ -132,7 +131,7 @@ ggsave(plot=g, file=path(root, 'cor_viz_helpers/heat_maps/dna_through_dan.png'),
 # Heat maps with significance to 10 s lags
 #networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
 bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
-p <- plot_significance(d, networks, bands, label_middle=FALSE, axis_text = 12,
+p <- plot_significance(d=d, networks=networks, bands=bands, label_middle=FALSE, axis_text = 12,
                        by_channels=TRUE)
     
 ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
@@ -141,7 +140,7 @@ ggsave(plot=p, file=path(fig_save_root, 'significance.png'),
 
 # --- INTER SESSION PLOT --- #
 
-p <- plot_inter_session(d_run, networks, bands, label_middle=FALSE, 
+p <- plot_inter_session(d=d_run, networks=networks, bands=bands, label_middle=FALSE, 
                         return_icc = TRUE, axis_text = 12, overall_text=16)
 
 ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
@@ -153,7 +152,8 @@ ggsave(plot=p, file=path(fig_save_root, 'inter_session.png'),
 d_task <- read_feather(path(data_root, '../correlation_data/correlations_long_bytask.feather'))
 # Adjust lag to seconds
 d_task$lag <- d_task$lag * 2
-p <- plot_by_task(d_task, networks, bands, by_channels=TRUE)
+networks <- c('dATNa', 'dATNb', 'DNa', 'DNb')
+p <- plot_by_task(d_task, networks, bands, by_channels=FALSE, nlag_s=10)
 
 
 ggsave(plot=p, file=path(fig_save_root, 'by_task.png'),

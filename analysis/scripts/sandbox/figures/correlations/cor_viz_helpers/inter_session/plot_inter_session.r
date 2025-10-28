@@ -2,7 +2,7 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
                                return_icc=TRUE, n_lags=10, scales=NA,
                                overall_text=18, axis_text=16,
                                title='', y_label=NA, x_label=NA, colors_cor=NA,
-                               colors_icc=NA, by_channels=FALSE) {
+                               colors_icc=NA, by_channels=FALSE, nlag_s=NA) {
     
     #' Plot Inter-Session Reliability and Mean Correlations
     #'
@@ -55,7 +55,7 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
         .default = as.character(paletteer::paletteer_c('ggthemes::Green', n=100))
     )
     
-    
+    if (!is.na(nlag_s)) d <- d[d$lag <= nlag_s,]    
 
 	# --- GENERATE CORRELATION HEATMAPS --- #
 	
@@ -123,7 +123,7 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
     # Function for computing ICC between two vectors
 	get_icc <- function(s1, s2) {
 		d <- data.frame(s1, s2)
-		i <- ICC(d)$results
+		i <- suppressMessages(ICC(d)$results)
 		out <- i[i$type=='ICC3',]$ICC
 		return(out)
 	}

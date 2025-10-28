@@ -70,13 +70,6 @@ def format_gradcpt(subject, col_names, data_root):
 
 
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
 
     args = sys.argv[1:]
