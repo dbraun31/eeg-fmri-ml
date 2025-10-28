@@ -9,7 +9,7 @@ library(here)
 # Import data
 setwd(here())
 data_root <- path('analysis/data/original')
-fig_save_root <- path('analysis/scripts/sandbox/session_icc_steps')
+fig_save_root <- path('analysis/scripts/sandbox/figures/figures_scratch')
 
 # Add path to data and figure save root
 # data_root <- path('path/to/data')
