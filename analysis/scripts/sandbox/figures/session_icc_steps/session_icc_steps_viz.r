@@ -26,6 +26,7 @@ fig_save_root <- path('analysis/scripts/sandbox/session_icc_steps')
 # fig_save_root <- path('path/to/figures)
 
 # Full data for TRs in run histograms across subjects
+# (This is a big dataset)
 d_full <- read_feather(path(data_root, '../correlation_data/merged_data.feather'))
 
 dpath <- path(data_root, '../correlation_data/iccs.csv')
@@ -59,6 +60,7 @@ gc()
 # Visualize aggregate result
 d %>% 
     mutate(run = as.integer(str_extract(run_set, '_(\\d)', group = 1))) %>% 
+    head()
     group_by(run) %>% 
     summarize(icc = mean(icc)) %>% 
     ggplot(aes(x = run, y = icc)) +

@@ -25,7 +25,7 @@ compute_tr_metrics <- function(row, cors, networks) {
     
     # returns: A data frame of EEG signatures (dot products and rho) for each fMRI network
     
-    # Save out metadata
+    # Parse metadata
     row <- unlist(row)
     subject_row <- row['subject']
     session_row <- row['session']
