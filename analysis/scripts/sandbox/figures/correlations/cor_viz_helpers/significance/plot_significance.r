@@ -3,7 +3,7 @@
 plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
                               overall_text=25, axis_text=18, legend_text=16,
                               y_label=NA, x_label=NA, by_channels=FALSE, title='', 
-                              colors=NA, nlag_s=NA, nrow=NA) {
+                              colors=NA, nlag_s=NA, nrow=NA, bytask=FALSE, runs=NA) {
     #' Plot Frequency–Lag Heatmap with Significance Markers
     #'
     #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
@@ -29,6 +29,11 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
     #' @examples
     #' plot_significance(df, networks = c("DMN", "DAN"), bands = c("alpha", "beta"))
     
+    if (bytask & !'task' %in% colnames(d)) stop('Must pass by task correlation data frame as data argument.')
+    if (!all(is.na(runs)) & !'run' %in% colnames(d)) stop('Must pass run-level correlation data frame as data argument.')
+    if (!all(is.na(runs)) & bytask) stop('Cannot specify runs while plotting across tasks.')
+    
+    if (!all(is.na(runs))) runs <- sapply(runs, FUN = function(x) paste0('run-00', x))
     y_var <- ifelse(by_channels, 'channel', 'lag')
     y_label <- ifelse(!is.na(x_label), x_label,
                       ifelse(y_var == 'channel', 'Channel', 'Lag (s)'))
@@ -40,6 +45,7 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
         length(colors) > 2 ~ colorRampPalette(colors)(11),
         .default = rev(brewer.pal(11, 'RdBu'))
     )
+    
     
 	# Get frequency bands
 	breaks <- c(0, 1, 4, 8, 12, 30, 40)
@@ -58,30 +64,63 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 	
 	# Generate significance markers
 	if (!is.na(nlag_s)) d <- d[d$lag <= nlag_s,]
-	ps <- d %>% 
-		mutate(bin = cut(frequency, breaks, labels)) %>% 
-		filter(bin %in% bands_grab, lag <= 10,
-			   network %in% !!networks) %>% 
-		group_by(subject, !!sym(y_var), network, bin) %>% 
-		summarize(cors = mean(cors)) %>% 
-	    ungroup() %>% 
-	    mutate(cors = fisherz(cors)) %>% # Apply Fisher z transform
-		group_by(!!sym(y_var), network, bin) %>% 
-		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
-	    group_by(network) %>% 
-		mutate(p_adj = p.adjust(p, method='fdr'),
-			   network = factor(network, levels = !!networks)) %>% 
-		filter(p_adj < .05) 
-		
-	# Generate averages to show in heat map
-	pd <- d %>% 
-		mutate(bin = cut(frequency, breaks, labels)) %>% 
-		filter(bin %in% bands_grab, lag <= 10,
-			   network %in% !!networks) %>% 
-		group_by(bin, !!sym(y_var), network) %>% 
-		summarize(cors = mean(cors)) %>% 
-		mutate(network = factor(network, levels = networks),
-		       cors = fisherz(cors))
+	if (!bytask) {
+	    if (!all(is.na(runs))) d <- d[d$run %in% runs,]
+    	ps <- d %>% 
+    		mutate(bin = cut(frequency, breaks, labels)) %>% 
+    		filter(bin %in% bands_grab, 
+    			   network %in% !!networks) %>% 
+    		group_by(subject, !!sym(y_var), network, bin) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    	    ungroup() %>% 
+    	    mutate(cors = fisherz(cors)) %>% # Apply Fisher z transform
+    		group_by(!!sym(y_var), network, bin) %>% 
+    		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
+    	    group_by(network) %>% 
+    		mutate(p_adj = p.adjust(p, method='fdr'),
+    			   network = factor(network, levels = !!networks)) %>% 
+    		filter(p_adj < .05) 
+    		
+    	# Generate averages to show in heat map
+    	pd <- d %>% 
+    		mutate(bin = cut(frequency, breaks, labels)) %>% 
+    		filter(bin %in% bands_grab,
+    			   network %in% !!networks) %>% 
+    		group_by(subject, bin, !!sym(y_var), network) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    		group_by(bin, !!sym(y_var), network) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    		mutate(network = factor(network, levels = networks),
+    		       cors = fisherz(cors))
+	} else {
+	    
+    	ps <- d %>% 
+    		mutate(bin = cut(frequency, breaks, labels)) %>% 
+    		filter(bin %in% bands_grab,
+    			   network %in% !!networks) %>% 
+    		group_by(subject, !!sym(y_var), network, bin, task) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    	    ungroup() %>% 
+    	    mutate(cors = fisherz(cors)) %>% # Apply Fisher z transform
+    		group_by(!!sym(y_var), network, bin, task) %>% 
+    		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
+    	    group_by(network, task) %>% 
+    		mutate(p_adj = p.adjust(p, method='fdr'),
+    			   network = factor(network, levels = !!networks)) %>% 
+    		filter(p_adj < .05) 
+    		
+    	# Generate averages to show in heat map
+    	pd <- d %>% 
+    		mutate(bin = cut(frequency, breaks, labels)) %>% 
+    		filter(bin %in% bands_grab, 
+    			   network %in% !!networks) %>% 
+    		group_by(subject, bin, !!sym(y_var), network, task) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    		group_by(bin, !!sym(y_var), network, task) %>% 
+    		summarize(cors = mean(cors)) %>% 
+    		mutate(network = factor(network, levels = networks),
+    		       cors = fisherz(cors))
+	}
 	
 	# Determine scales
 	if (!is.na(scales)) {
@@ -113,9 +152,8 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 		labs(
 			x = x_label,
 			y = y_label,
-			fill = latex2exp::TeX('$z\\,\\rho_{~~EEG, fMRI}$')
+			fill = latex2exp::TeX('$z\\,[\\rho\\,]_{~~EEG, fMRI}$')
 		) + 
-		facet_wrap(~network) + 
 	    sfg + 
 		theme_bw() + 
 		theme(strip.background = element_rect(fill = NA),
@@ -128,6 +166,11 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			  legend.text = element_text(size = legend_text, angle = 45, hjust=1),
 			  legend.title = element_text(margin = margin(r = 30)))
 		
+	if (bytask) {
+	    p <- p + facet_grid(task~network)
+	} else {
+	    p <- p + facet_wrap(~network)
+	}
 	if (!is.na(nrow)) p <- p + facet_wrap(~network, nrow = nrow)
 	if (y_var == 'lag') p <- p + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
 	if (title == '') p <- p + theme(plot.title = element_blank())

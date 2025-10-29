@@ -2,18 +2,38 @@ import mne
 from mne.time_frequency import tfr_array_morlet
 import numpy as np
 import os
+from pyprojroot import here
+import sys
+from pathlib import Path
 
-raw = mne.io.read_raw_eeglab('sub-015_ses-002_bld002_eeg_Bergen_CWreg_filt_ICA_rej.set')
+args = sys.argv[1:]
+if not args:
+    os.chdir(here())
+    data_root = Path('analysis/data/original')
+else:
+    data_root = Path(args[1])
+
+
+script_root = here() / Path('analysis/scripts/sandbox/figures/eeg_timeseries')
+subject = 'sub-006'
+session = 'ses-002'
+run = 'bld002'
+fname = Path(f'{subject}_{session}_{run}_eeg_Bergen_CWreg_filt_ICA_rej.set')
+data_path = data_root / Path(f'{subject}/{session}/eeg')
+
+raw = mne.io.read_raw_eeglab(data_path / fname)
 sfreq = raw.info['sfreq']
 raw = raw.get_data()
 
-time_range = 2
+time_range = 60
 np.random.seed(42)
-start = np.random.choice(range(len(raw)))
+start = np.random.choice(range(raw.shape[1]))
+#start = raw.shape[1] // 2
 end = int(start + time_range * sfreq)
 
 
-freqs = np.logspace(np.log10(1), np.log10(40), 40)
+#freqs = np.logspace(np.log10(1), np.log10(40), 40)
+freqs = np.linspace(1, 40, 40)
 n_cycles = freqs / 2
 
 power = tfr_array_morlet(
@@ -28,5 +48,5 @@ raw_s = raw.transpose()[np.arange(start, end)]
 power = power.transpose(2, 0, 1)
 power_s = power[np.arange(start, end)]
 
-np.save('timeseries.npy', raw_s)
-np.save('power.npy', power_s)
+np.save(script_root / Path('timeseries.npy'), raw_s)
+np.save(script_root / Path('power.npy'), power_s)

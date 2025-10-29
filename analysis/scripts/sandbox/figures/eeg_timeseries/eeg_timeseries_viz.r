@@ -1,19 +1,22 @@
+rm(list=ls())
 library(reticulate)
 library(tidyverse)
+library(here)
 library(glue)
 library(ggpubr)
 library(fs)
-fig_save_root <- path('~/Dropbox/post_doc/professional/meeting_notes/lab/2025-10-23')
+fig_save_root <- path(here(), 'analysis/scripts/sandbox/figures/figures_scratch')
 overall_text <- 18
+script_root <- as.character(path(here(), 'analysis/scripts/sandbox/figures/eeg_timeseries'))
 
 use_condaenv('eeg-fmri')
 py_run_string('
 import numpy as np
-raw = np.load("timeseries.npy")
-power = np.load("power.npy")
+raw = np.load(f"{r.script_root}/timeseries.npy")
+power = np.load(f"{r.script_root}/power.npy")
 ')
 
-ch_names <- readLines('ch_names.txt')
+ch_names <- suppressWarnings(readLines(path(script_root, 'ch_names.txt')))
 
 raw <- py$raw
 power <- py$power
@@ -22,7 +25,7 @@ power <- py$power
 dimnames(power) <- list(
     sample = 1:dim(power)[1],
     channel = ch_names,
-    freq = exp(seq(log(1), log(40), length.out = 40))
+    freq = 1:40
 )
 
 power <- as.data.frame.table(power, responseName = 'power')
@@ -30,6 +33,12 @@ power <- as.data.frame.table(power, responseName = 'power')
 
 set.seed(42)
 random_channel <- sample(ch_names, size = 1)
+
+n_chans <- length(ch_names) %/% 3
+random_channels <- sample(ch_names, size = n_chans)
+if (!random_channel %in% random_channels) {
+    random_channels <- c(random_channels[1:(length(random_channels)-1)], random_channel)
+}
 
 
 # Timeseries plot
@@ -47,15 +56,15 @@ time_min <- 0
 time_max <- ceiling(max(raw$time))
 time_mid <- as.integer((time_min + time_max) / 2)
 
-random_channels <- sample(ch_names, 5)
-if (!random_channel %in% random_channels) {
-    random_channels <- random_channels[1:(length(random_channels)-1)]
-    random_channels <- c(random_channels, random_channel)
-}
+# Normalize
+raw <- raw %>% 
+    group_by(channel) %>% 
+    mutate(voltage_n = scale(voltage)[,1])
 
 p1 <- raw %>% 
     filter(channel %in% random_channels) %>% 
-    ggplot(aes(x = time, y = voltage, group = 1)) + 
+    mutate(channel = factor(channel, levels = ch_names[order(ch_names)])) %>% 
+    ggplot(aes(x = time, y = voltage_n, group = 1)) + 
     geom_line() + 
     facet_grid(channel~.) + 
     labs(
@@ -82,8 +91,10 @@ power <- power %>%
 
 green <- paletteer::paletteer_c('ggthemes::Green', n=100)
 
+clip_quantile <- .95
 p2 <- power %>% 
     filter(channel == random_channel) %>% 
+    mutate(power = ifelse(power > quantile(power, clip_quantile), quantile(power, clip_quantile), power)) %>% 
     ggplot(aes(x = time, y = freq)) + 
     geom_raster(aes(fill = power), interpolate = TRUE) +
     labs(
@@ -92,24 +103,26 @@ p2 <- power %>%
         fill = 'Power',
         caption = glue('Channel: {random_channel}')
     ) + 
-    scale_fill_gradientn(colors = green) + 
-    scale_y_log10() + 
+    scale_fill_gradientn(colors = green) + #, limits = c(quantile(power$power, 0.05), quantile(power$power, 0.95))) + 
     scale_x_continuous(breaks = c(time_min, time_mid, time_max),
                        labels = function(x) as.integer(x)) +
     theme_bw() + 
     theme(panel.grid = element_blank(),
           axis.ticks = element_blank(),
           legend.position = 'bottom',
-          legend.text = element_text(angle = 45, hjust = 1, size = 6),
+          legend.text = element_text(angle = 45, hjust = 1, size = 10),
           legend.title = element_text(size = 9),
           legend.key.size = unit(.5, 'cm'),
           text = element_text(size = overall_text))
     
+fill <- ggplot() + 
+    theme_void() + 
+    theme(panel.background = element_rect(fill = 'white'))
     
-g <- ggarrange(p1, p2, nrow = 2)    
+g <- ggarrange(p1, fill, p2, nrow = 1, widths = c(1, .1, 1))    
     
 ggsave(plot=g, file = path(fig_save_root, 'eeg_timeseries.png'),
-       width = 1920, height = 1080, units = 'px', dpi = 150)    
+       width = 12, height = 6, units = 'in', dpi = 300)
     
     
     

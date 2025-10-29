@@ -3,7 +3,6 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
                          scales=NA, title='', x_label=NA, y_label=NA, by_channels=FALSE,
                          colors=NA, nlag_s=NA) {
     
-    
     # Configure inputs
     y_var <- ifelse(by_channels, 'channel', 'lag')
     y_label <- ifelse(!is.na(x_label), x_label,
