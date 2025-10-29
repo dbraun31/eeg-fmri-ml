@@ -55,6 +55,7 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
         theme(panel.grid = element_blank(),
               axis.ticks = element_blank(),
               strip.background = element_rect(fill = NA, color = 'black'),
+              legend.title = element_text(margin = margin(r = 30)),
               text = element_text(size = overall_text),
               axis.text = element_text(size = axis_text),
               legend.position = 'bottom')

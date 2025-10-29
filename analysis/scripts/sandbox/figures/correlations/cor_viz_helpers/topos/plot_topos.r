@@ -1,7 +1,7 @@
 library(glue)
 
 plot_topo <- function(d, networks, bands, scales = NA, overall_text=18, 
-                        title='', colors=NA, nlags_s=NA) {
+                        title='', legend_text = 16, colors=NA, nlags_s=NA) {
     #' Plot Topographic Map of Mean Correlations
     #'
     #' Generates faceted EEG topographic maps of mean correlation values (`cors`) 
@@ -56,9 +56,7 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18,
 		summarize(cors = mean(cors), channel = unique(channel)) %>% 
 		group_by(x, y, band, network) %>% 
 		summarize(cors = mean(cors), channel = unique(channel)) %>% 
-		mutate(z = 50, 
-			   network = recode(network, `dan` = 'DAN', `dmn` = 'DMN',
-							   `DNa` = 'DNa', `DNb` = 'DNb'))
+		mutate(z = 50)
 
 	if (!is.na(scales)) {
 	    small <- floor(scales[1] * 100) / 100
@@ -75,7 +73,7 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18,
 		ggplot(aes(x = x, y = y, z = z)) + 
 		geom_topo(chan_markers = 'text', aes(fill = cors, label = channel)) +
 		facet_grid(band~network) + 
-		scale_fill_gradientn(colors = colors, 'RdBu',
+		scale_fill_gradientn(colors = colors, 
 							 values = rescale(c(small, 0, big)),
 							 breaks = c(small, 0, big),
 							 limits = c(small, big)) +
@@ -83,14 +81,16 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18,
 		    title = title,
 			x = '',
 			y = '',
-			fill = latex2exp::TeX('$\\rho_{EEG, fMRI}$')
+			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
 		) + 
 		theme_bw() + 
 		theme(panel.grid = element_blank(),
 			  axis.text = element_blank(),
 			  axis.title = element_blank(),
 			  strip.background = element_rect(fill = NA),
-			  legend.position = 'none',
+			  legend.position = 'bottom',
+			  legend.text = element_text(angle = 45, hjust = 1, size = legend_text),
+			  legend.title = element_text(margin = margin(r = 30)),
 			  text = element_text(size=overall_text),
 			  axis.ticks = element_blank())
 

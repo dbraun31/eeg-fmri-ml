@@ -3,7 +3,7 @@
 plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
                               overall_text=25, axis_text=18, legend_text=16,
                               y_label=NA, x_label=NA, by_channels=FALSE, title='', 
-                              colors=NA, nlag_s=NA) {
+                              colors=NA, nlag_s=NA, nrow=NA) {
     #' Plot Frequency–Lag Heatmap with Significance Markers
     #'
     #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
@@ -64,6 +64,8 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			   network %in% !!networks) %>% 
 		group_by(subject, !!sym(y_var), network, bin) %>% 
 		summarize(cors = mean(cors)) %>% 
+	    ungroup() %>% 
+	    mutate(cors = fisherz(cors)) %>% # Apply Fisher z transform
 		group_by(!!sym(y_var), network, bin) %>% 
 		summarize(p = t.test(cors, mu = 0)$p.value) %>% 
 	    group_by(network) %>% 
@@ -78,7 +80,8 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			   network %in% !!networks) %>% 
 		group_by(bin, !!sym(y_var), network) %>% 
 		summarize(cors = mean(cors)) %>% 
-		mutate(network = factor(network, levels = networks))
+		mutate(network = factor(network, levels = networks),
+		       cors = fisherz(cors))
 	
 	# Determine scales
 	if (!is.na(scales)) {
@@ -107,12 +110,12 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 		ggplot(aes(x = bin, y = !!sym(y_var))) + 
 		geom_tile(aes(fill = cors)) + 
 		geom_point(data=ps, aes(x = bin, y = !!sym(y_var)), shape = 8, color = 'gold', size = 3) + 
-		facet_wrap(~network, nrow=1) + 
 		labs(
 			x = x_label,
 			y = y_label,
-			fill = latex2exp::TeX('$\\rho_{~~EEG, fMRI}$')
+			fill = latex2exp::TeX('$z\\,\\rho_{~~EEG, fMRI}$')
 		) + 
+		facet_wrap(~network) + 
 	    sfg + 
 		theme_bw() + 
 		theme(strip.background = element_rect(fill = NA),
@@ -125,6 +128,7 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
 			  legend.text = element_text(size = legend_text, angle = 45, hjust=1),
 			  legend.title = element_text(margin = margin(r = 30)))
 		
+	if (!is.na(nrow)) p <- p + facet_wrap(~network, nrow = nrow)
 	if (y_var == 'lag') p <- p + scale_y_continuous(breaks = seq(0, max(d$lag), 2), labels = seq(0, max(d$lag), 2)) 
 	if (title == '') p <- p + theme(plot.title = element_blank())
 	
