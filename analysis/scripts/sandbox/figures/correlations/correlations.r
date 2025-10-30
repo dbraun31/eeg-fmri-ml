@@ -56,15 +56,6 @@ if (!dir_exists(fig_save_root)) {
     dir_create(fig_save_root)
 }
 
-# --- Parse user given data directory if supplied --- #
-args <- commandArgs(trailingOnly=TRUE)
-
-if (length(args) == 0) {
-    data_root <- path('analysis/data/original')
-} else {
-    data_root <- path(args[1])
-}
-
 # Import data
 if (file.exists(path(data_root, '../correlation_data/correlations_long.feather'))) {
     d_run <- read_feather(path(data_root, '../correlation_data/correlations_long.feather'))

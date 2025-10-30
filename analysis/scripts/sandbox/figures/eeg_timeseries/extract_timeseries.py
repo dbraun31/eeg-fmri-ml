@@ -25,7 +25,7 @@ raw = mne.io.read_raw_eeglab(data_path / fname)
 sfreq = raw.info['sfreq']
 raw = raw.get_data()
 
-time_range = 60
+time_range = 10
 np.random.seed(42)
 start = np.random.choice(range(raw.shape[1]))
 #start = raw.shape[1] // 2

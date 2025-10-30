@@ -1,6 +1,8 @@
 # Import libraries
 rm(list=ls())
 library(tidyverse)
+library(data.table)
+library(psych)
 library(paletteer)
 library(arrow)
 library(fs)
@@ -86,24 +88,49 @@ gc()
 
 
 # -- VISUALIZE AGGREGATE ICC RESULT -- #
+if (!file.exists(path(data_root, '../correlation_data/iccs_full.csv'))) {
+    stop('Need to run analysis/scripts/sandbox/session_icc_steps/03-compute_icc_full.r before making this plot.')
+}
+icc_full <- read.csv(path(data_root, '../correlation_data/iccs_full.csv'))
+colnames(icc_full)[colnames(icc_full) == 'network'] <- 'group'
+
+t <- icc_full %>% 
+    mutate(lag = lag * 2) %>% # Convert to s
+    filter(lag <= nlag_s, group %in% networks) %>% 
+    group_by(group) %>% 
+    summarize(mean = mean(icc), mx = max(icc), min = min(icc), sd = sd(icc),
+              lag = lag[which.max(icc)], 
+              channel = channel[which.max(icc)], frequency = frequency[which.max(icc)]) #%>% 
+
+write.csv(t, path(data_root, '../correlation_data/icc_coordinates.csv'), row.names = FALSE)
+
+t <- t %>% 
+    select(group, mean, mx) %>% 
+    gather(metric, value, mean, mx) %>% 
+    mutate(run = ifelse(metric == 'mn', 5, 6), network = 1)
+    
 
 p <- d %>% 
     mutate(run = as.integer(str_extract(run_set, '_(\\d)', group = 1))) %>% 
     filter(lag <= nlag_s, network %in% !!networks) %>% 
     group_by(run, network) %>% 
     summarize(icc = mean(icc)) %>% 
-    ggplot(aes(x = run, y = icc)) +
+    ggplot(aes(x = run, y = icc, group = network)) +
     geom_point(aes(color = network)) + 
+    geom_point(data = t, aes(x = run, y = value, color = group)) + 
     geom_line(aes(color = network)) + 
     labs(
         x = 'Number of runs in data',
-        y = 'Mean intraclass correlation coefficient'
+        y = 'Mean intraclass correlation coefficient',
+        color = 'Network'
     ) + 
+    scale_x_continuous(breaks = 1:6, labels = c(1:4, 'Full data\n(mean)', 'Full data\n(max)')) + 
     theme_bw() + 
     theme(axis.ticks = element_blank(),
           panel.grid = element_blank(),
           text = element_text(size = overall_text),
-          axis.text = element_text(size = axis_text))
+          axis.text = element_text(size = axis_text),
+          legend.position = c(.25, .8))
 
 if (!all(is.na(network_colors))) {
     colors <- network_colors

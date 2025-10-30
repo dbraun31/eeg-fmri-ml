@@ -28,6 +28,7 @@ get_iccs <- function(script_root) {
     # Returns a list with four elements, corresponding to ICCs for each run set
     #   Each list element is a vector of ICCs of length equal to EEG features
     
+    if (!dir.exists(path(script_root, 'cache'))) stop('Must run 01-compute_correlations_byrun.r before this script.')
     caches <- list.files(path(script_root, 'cache'), full.names=TRUE)
     print('Importing and formatting data...')
     d <- do.call(rbind, lapply(caches, read_feather))
@@ -41,6 +42,7 @@ get_iccs <- function(script_root) {
           value.var = 'cors')[, subject := NULL]
     
     
+    d[, network := str_replace(network, '_', '.')]
     d[, feature_set := paste(channel, frequency, lag, network, sep = '_')]
     
     feature_sets <- unique(d$feature_set)
@@ -59,7 +61,7 @@ get_iccs <- function(script_root) {
         }
         options(future.globals.maxSize = 16 * 1024^3)
         
-        out <- future_sapply(feature_sets, FUN = function(x, d_run_set) {
+        out <- future_sapply(feature_sets[(length(feature_sets)-50):(length(feature_sets))], FUN = function(x, d_run_set) {
             # Apply ICC to each EEG feature set and network (in parallel)
             d_sub <- d_run_set[feature_set == x]
             ses_long <- d_sub[, .(cors = mean(cors, na.rm=TRUE)), by = .(subject, session)]
