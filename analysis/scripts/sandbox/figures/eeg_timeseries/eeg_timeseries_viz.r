@@ -10,6 +10,11 @@ fig_save_root <- path(here(), 'analysis/scripts/sandbox/figures/figures_scratch'
 overall_text <- 18
 script_root <- as.character(path(here(), 'analysis/scripts/sandbox/figures/eeg_timeseries'))
 
+npy_files <- c(path(script_root, 'timeseries.npy'),
+               path(script_root, 'power.npy'))
+
+if (!all(file.exists(npy_files))) stop('Must run python extract_timeseries.py path/to/data before this script.')
+
 use_condaenv('eeg-fmri')
 py_run_string('
 import numpy as np
