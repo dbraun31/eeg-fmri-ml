@@ -11,7 +11,7 @@ if not args:
     os.chdir(here())
     data_root = Path('analysis/data/original')
 else:
-    data_root = Path(args[1])
+    data_root = Path(args[0])
 
 
 script_root = here() / Path('analysis/scripts/sandbox/figures/eeg_timeseries')
