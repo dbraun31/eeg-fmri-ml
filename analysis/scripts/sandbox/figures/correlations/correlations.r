@@ -96,8 +96,12 @@ d <- d_run %>%
 
 # --- HEAT MAPS --- #
 
+# Use arg "write_csv='my_file_name'" to save out data (no need for ".csv" extension)
+# It will get saved in the fig_save_root defined above
+
 networks <- c('DNa', 'DNb', 'dATNa', 'dATNb')
-p1 <- plot_heat(d, networks, axis_text = 14, by_channels=FALSE, nlags_s=10, nrow = 1)
+p1 <- plot_heat(d, networks, axis_text = 14, by_channels=FALSE, nlags_s=10, nrow = 1,
+                write_csv='test')
 
 ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)
@@ -106,7 +110,7 @@ ggsave(plot=p1, file=path(fig_save_root, 'heat_maps.png'),
 # --- TOPO PLOTS --- #
 
 bands <- c('delta', 'theta', 'alpha', 'beta', 'gamma')
-p2 <- plot_topo(d, networks, bands)
+p2 <- plot_topo(d, networks, bands, nlags_s = 4)
 
 ggsave(plot=p2, file=path(fig_save_root, 'topos.png'), 
        width = 1920, height = 1080, units = 'px', dpi = 150)

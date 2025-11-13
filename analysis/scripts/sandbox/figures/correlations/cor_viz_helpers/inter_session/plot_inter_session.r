@@ -2,7 +2,8 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
                                return_icc=TRUE, n_lags=10, scales=NA,
                                overall_text=18, axis_text=16,
                                title='', y_label=NA, x_label=NA, colors_cor=NA,
-                               colors_icc=NA, by_channels=FALSE, nlag_s=NA) {
+                               colors_icc=NA, by_channels=FALSE, nlag_s=NA,
+                               write_csv=NA) {
     
     #' Plot Inter-Session Reliability and Mean Correlations
     #'
@@ -60,13 +61,18 @@ plot_inter_session <- function(d_run, networks, bands, label_middle=TRUE,
 	# --- GENERATE CORRELATION HEATMAPS --- #
 	
 	# Summarize across conditions and compute data to plot
-	pd1 <- d_run %>%
+	sd <- d_run %>%
 		filter(network %in% !!networks, lag <= n_lags) %>%
 		group_by(subject, session, frequency, !!sym(y_var), network) %>%
-		summarize(cors = mean(cors)) %>%
+		summarize(cors = mean(cors)) 
+	pd1 <- sd %>% 
 		group_by(session, frequency, !!sym(y_var), network) %>%
 		summarize(cors = mean(cors)) 
 
+	if (!is.na(write_csv)) {
+	    write.csv(sd, path(fig_save_root, write_csv, ext='csv'))
+	}
+	
 	# Whether to use user-specified scales
 	if (!is.na(scales)) {
 	    small <- floor(scales[1] * 100) / 100

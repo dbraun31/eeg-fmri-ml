@@ -3,7 +3,8 @@
 plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
                               overall_text=25, axis_text=18, legend_text=16,
                               y_label=NA, x_label=NA, by_channels=FALSE, title='', 
-                              colors=NA, nlag_s=NA, nrow=NA, bytask=FALSE, runs=NA) {
+                              colors=NA, nlag_s=NA, nrow=NA, bytask=FALSE, runs=NA,
+                              write_csv=NA) {
     #' Plot Frequency–Lag Heatmap with Significance Markers
     #'
     #' Creates a faceted heatmap of mean correlations (`cors`) across frequency bands and time lags
@@ -82,12 +83,13 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
     		filter(p_adj < .05) 
     		
     	# Generate averages to show in heat map
-    	pd <- d %>% 
+    	sd <- d %>% 
     		mutate(bin = cut(frequency, breaks, labels)) %>% 
     		filter(bin %in% bands_grab,
     			   network %in% !!networks) %>% 
     		group_by(subject, bin, !!sym(y_var), network) %>% 
-    		summarize(cors = mean(cors)) %>% 
+    		summarize(cors = mean(cors)) 
+    	pd <- sd %>% 
     		group_by(bin, !!sym(y_var), network) %>% 
     		summarize(cors = mean(cors)) %>% 
     		mutate(network = factor(network, levels = networks),
@@ -110,16 +112,21 @@ plot_significance <- function(d, networks, bands, scales=NA, label_middle=TRUE,
     		filter(p_adj < .05) 
     		
     	# Generate averages to show in heat map
-    	pd <- d %>% 
+    	sd <- d %>% 
     		mutate(bin = cut(frequency, breaks, labels)) %>% 
     		filter(bin %in% bands_grab, 
     			   network %in% !!networks) %>% 
     		group_by(subject, bin, !!sym(y_var), network, task) %>% 
-    		summarize(cors = mean(cors)) %>% 
+    		summarize(cors = mean(cors)) 
+    	pd <- sd %>% 
     		group_by(bin, !!sym(y_var), network, task) %>% 
     		summarize(cors = mean(cors)) %>% 
     		mutate(network = factor(network, levels = networks),
     		       cors = fisherz(cors))
+	}
+	
+	if (!is.na(write_csv)) {
+	    write.csv(sd, path(fig_save_root, write_csv, ext='csv'), row.names=FALSE)
 	}
 	
 	# Determine scales

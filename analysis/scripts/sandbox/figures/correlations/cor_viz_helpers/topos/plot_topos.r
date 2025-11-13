@@ -1,7 +1,8 @@
 library(glue)
 
 plot_topo <- function(d, networks, bands, scales = NA, overall_text=18, 
-                        title='', legend_text = 16, colors=NA, nlags_s=NA) {
+                        title='', legend_text = 16, colors=NA, nlags_s=NA,
+                      write_csv=NA) {
     #' Plot Topographic Map of Mean Correlations
     #'
     #' Generates faceted EEG topographic maps of mean correlation values (`cors`) 
@@ -47,18 +48,23 @@ plot_topo <- function(d, networks, bands, scales = NA, overall_text=18,
 	bands_grab <- labels[2:(length(labels))][which(labels_simple %in% bands)]
 	
 
-	if (!is.na(nlags_s)) d <- d[d$lag <= nlag_s,]
-	pd <- d %>% 
+	if (!is.na(nlags_s)) d <- d[d$lag <= nlags_s,]
+	sd <- d %>% 
 		mutate(band = cut(frequency, breaks, labels)) %>% 
 		filter(band != 'init (0,1]') %>% 
 		inner_join(py$ch_pos) %>% 
 		group_by(subject, x, y, band, network) %>% 
-		summarize(cors = mean(cors), channel = unique(channel)) %>% 
+		summarize(cors = mean(cors), channel = unique(channel)) 
+	pd <- sd %>% 
 		group_by(x, y, band, network) %>% 
 		summarize(cors = mean(cors), channel = unique(channel)) %>% 
 		mutate(z = 50)
+	
+	if (!is.na(write_csv)) {
+	    write.csv(sd, path(fig_save_root, write_csv, ext='csv'), row.names=FALSE)
+	}
 
-	if (!is.na(scales)) {
+	if (!all(is.na(scales))) {
 	    small <- floor(scales[1] * 100) / 100
 	    big <- ceiling(scales[2] * 100) / 100
 	} else {

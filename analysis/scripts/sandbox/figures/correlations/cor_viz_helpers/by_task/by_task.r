@@ -1,7 +1,7 @@
 
 plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
                          scales=NA, title='', x_label=NA, y_label=NA, by_channels=FALSE,
-                         colors=NA, nlag_s=NA) {
+                         colors=NA, nlag_s=NA, write_csv=NA) {
     
     # Configure inputs
     y_var <- ifelse(by_channels, 'channel', 'lag')
@@ -19,11 +19,14 @@ plot_by_task <- function(d_task, networks, bands, axis_text=14, overall_text=18,
     if (!is.na(nlag_s)) d_task <- d_task[d_task$lag <= nlag_s,]
     
     # Summarize data
-    pd <- d_task %>% 
+    sd <- d_task %>% 
         group_by(subject, network, frequency, !!sym(y_var), task) %>% 
-        summarize(cors = mean(cors)) %>% 
+        summarize(cors = mean(cors)) 
+    pd <- sd %>% 
         group_by(network, frequency, !!sym(y_var), task) %>% 
         summarize(cors = mean(cors)) 
+    
+    write.csv(sd, path(fig_save_root, write_csv, ext='.csv'))
     
     # Set scale constraints
     if (!is.na(scales)) {

@@ -8,7 +8,8 @@ maybe_log_scale <- function(x, tol = 1e-6) {
 
 plot_heat <- function(d, networks, scales = NA,
                       overall_text=18, axis_text=16, x_label=NA, y_label=NA,
-                      title='', by_channels=FALSE, colors=NA, nlags_s=NA, nrow=NA) {
+                      title='', by_channels=FALSE, colors=NA, nlags_s=NA, nrow=NA,
+                      write_csv=NA) {
     #' Plot Heatmap of Mean Correlations by Frequency and Lag
     #'
     #' Generates a faceted heatmap of mean correlation values (`cors`) across
@@ -53,12 +54,17 @@ plot_heat <- function(d, networks, scales = NA,
 	# Prep data
 	if (!is.na(nlags_s)) d <- d[d$lag <= nlags_s,]
 	
-	pd <- d %>% 
+	sd <- d %>% 
 		filter(network %in% networks) %>%
 		group_by(subject, !!sym(y_var), frequency, network) %>% 
-		summarize(cors = mean(cors)) %>% 
+		summarize(cors = mean(cors)) 
+    pd <- sd %>% 	
 		group_by(!!sym(y_var), frequency, network) %>% 
 		summarize(cors = mean(cors)) 
+	
+	if (!is.na(write_csv)) {
+	    write.csv(sd, path(fig_save_root, write_csv, ext='csv'), row.names = FALSE) # Pulls fig_save_root from global...
+	}
 
 	# Set scale constraints
 	if (!is.na(scales)) {
