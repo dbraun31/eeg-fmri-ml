@@ -123,10 +123,10 @@ d <- format_iccs(iccs)
 # Save result
 dpath <- path(data_root, '../correlation_data/iccs.csv')
 write.csv(d, dpath, row.names=FALSE)
-# cache_dir <- path(script_root, 'cache')
-# if (dir_exists(cache_dir)) {
-#     dir_delete(cache_dir)
-# }
+cache_dir <- path(script_root, 'cache')
+if (dir_exists(cache_dir)) {
+    dir_delete(cache_dir)
+}
 
 
 
