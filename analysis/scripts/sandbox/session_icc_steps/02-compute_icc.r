@@ -36,11 +36,6 @@ get_iccs <- function(script_root) {
     # Drop subject 3 (no session 1 data)
     d <- d[subject != 'sub-003']
     
-    ex <- dcast(d[channel == 'Fp1' & frequency == 1 & lag == 0 & network == 'dATNa' & run_set==4, 
-              .(cors = mean(cors)), by = .(subject, session)],
-          subject ~ session,
-          value.var = 'cors')[, subject := NULL]
-    
     
     d[, network := str_replace(network, '_', '.')]
     d[, feature_set := paste(channel, frequency, lag, network, sep = '_')]
@@ -61,7 +56,7 @@ get_iccs <- function(script_root) {
         }
         options(future.globals.maxSize = 16 * 1024^3)
         
-        out <- future_sapply(feature_sets[(length(feature_sets)-50):(length(feature_sets))], FUN = function(x, d_run_set) {
+        out <- future_sapply(feature_sets, FUN = function(x, d_run_set) {
             # Apply ICC to each EEG feature set and network (in parallel)
             d_sub <- d_run_set[feature_set == x]
             ses_long <- d_sub[, .(cors = mean(cors, na.rm=TRUE)), by = .(subject, session)]
@@ -128,10 +123,10 @@ d <- format_iccs(iccs)
 # Save result
 dpath <- path(data_root, '../correlation_data/iccs.csv')
 write.csv(d, dpath, row.names=FALSE)
-cache_dir <- path(script_root, 'cache')
-if (dir_exists(cache_dir)) {
-    dir_delete(cache_dir)
-}
+# cache_dir <- path(script_root, 'cache')
+# if (dir_exists(cache_dir)) {
+#     dir_delete(cache_dir)
+# }
 
 
 

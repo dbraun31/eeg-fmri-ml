@@ -1,4 +1,5 @@
-# This script will potentially take a long time to run
+# This script computes an ICC across the whole data (not split by run set)
+# For computing the final points needed on the plot showing ICC across runs
 
 rm(list=ls())
 library(tidyverse)
